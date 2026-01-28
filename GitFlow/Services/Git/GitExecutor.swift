@@ -157,15 +157,18 @@ actor GitExecutor {
     /// - Parameters:
     ///   - arguments: The Git command arguments.
     ///   - workingDirectory: The directory to run the command in.
+    ///   - timeout: Maximum time to wait for the command to complete.
     /// - Returns: The standard output.
     /// - Throws: GitError if the command fails.
     func executeOrThrow(
         arguments: [String],
-        workingDirectory: URL
+        workingDirectory: URL,
+        timeout: TimeInterval? = nil
     ) async throws -> String {
         let result = try await execute(
             arguments: arguments,
-            workingDirectory: workingDirectory
+            workingDirectory: workingDirectory,
+            timeout: timeout
         )
 
         guard result.succeeded else {

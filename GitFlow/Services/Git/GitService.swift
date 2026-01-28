@@ -186,9 +186,11 @@ actor GitService {
     /// Gets the diff for a specific commit.
     func getCommitDiff(commitHash: String, in repository: Repository, options: DiffOptions = DiffOptions()) async throws -> [FileDiff] {
         let command = ShowCommitDiffCommand(commitHash: commitHash, options: options)
+        // Use longer timeout for commit diffs as they can be large
         let output = try await executor.executeOrThrow(
             arguments: command.arguments,
-            workingDirectory: repository.rootURL
+            workingDirectory: repository.rootURL,
+            timeout: 120.0
         )
         return try command.parse(output: output)
     }

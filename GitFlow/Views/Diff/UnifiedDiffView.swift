@@ -51,42 +51,38 @@ struct UnifiedDiffView: View {
     }
 
     var body: some View {
-        GeometryReader { geometry in
-            ScrollViewReader { scrollProxy in
-                ScrollView(wrapLines ? [.vertical] : [.horizontal, .vertical]) {
-                    LazyVStack(alignment: .leading, spacing: 0) {
-                        ForEach(Array(diff.hunks.enumerated()), id: \.element.id) { hunkIndex, hunk in
-                            DiffHunkView(
-                                hunk: hunk,
-                                hunkIndex: hunkIndex,
-                                showLineNumbers: showLineNumbers,
-                                wrapLines: wrapLines,
-                                colorScheme: colorScheme,
-                                searchText: searchText,
-                                currentMatchIndex: currentMatchIndex,
-                                matchLocations: matchLocations,
-                                canStage: canStageHunks,
-                                canUnstage: canUnstageHunks,
-                                onStage: { onStageHunk?(hunk) },
-                                onUnstage: { onUnstageHunk?(hunk) },
-                                isLineSelectionMode: isLineSelectionMode,
-                                selectedLineIds: selectedLineIds,
-                                onSelectLines: { newSelection in
-                                    selectedLineIds = newSelection
-                                }
-                            )
-                        }
+        ScrollViewReader { scrollProxy in
+            ScrollView(wrapLines ? [.vertical] : [.horizontal, .vertical]) {
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    ForEach(Array(diff.hunks.enumerated()), id: \.element.id) { hunkIndex, hunk in
+                        DiffHunkView(
+                            hunk: hunk,
+                            hunkIndex: hunkIndex,
+                            showLineNumbers: showLineNumbers,
+                            wrapLines: wrapLines,
+                            colorScheme: colorScheme,
+                            searchText: searchText,
+                            currentMatchIndex: currentMatchIndex,
+                            matchLocations: matchLocations,
+                            canStage: canStageHunks,
+                            canUnstage: canUnstageHunks,
+                            onStage: { onStageHunk?(hunk) },
+                            onUnstage: { onUnstageHunk?(hunk) },
+                            isLineSelectionMode: isLineSelectionMode,
+                            selectedLineIds: selectedLineIds,
+                            onSelectLines: { newSelection in
+                                selectedLineIds = newSelection
+                            }
+                        )
                     }
-                    .frame(minWidth: wrapLines ? nil : geometry.size.width, minHeight: geometry.size.height, alignment: .topLeading)
-                    .frame(maxWidth: wrapLines ? geometry.size.width : nil)
-                    .font(DSTypography.code())
                 }
-                .onChange(of: currentMatchIndex) { newIndex in
-                    if newIndex < matchLocations.count {
-                        let match = matchLocations[newIndex]
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            scrollProxy.scrollTo(match.lineId, anchor: .center)
-                        }
+                .font(DSTypography.code())
+            }
+            .onChange(of: currentMatchIndex) { newIndex in
+                if newIndex < matchLocations.count {
+                    let match = matchLocations[newIndex]
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        scrollProxy.scrollTo(match.lineId, anchor: .center)
                     }
                 }
             }
@@ -171,7 +167,7 @@ struct DiffHunkView: View {
     var selectedLineIds: Set<String> = []
     var onSelectLines: ((Set<String>) -> Void)?
     // Word-level diff
-    var showWordDiff: Bool = true
+    var showWordDiff: Bool = false
 
     @State private var isHovered: Bool = false
     @State private var isDragging: Bool = false
@@ -217,7 +213,8 @@ struct DiffHunkView: View {
 
                 Spacer()
 
-                if isHovered && !isDragging {
+                // Stage/Unstage buttons - use opacity instead of conditional to prevent layout shifts
+                if canStage || canUnstage {
                     HStack(spacing: DSSpacing.sm) {
                         if canStage {
                             Button {
@@ -225,6 +222,7 @@ struct DiffHunkView: View {
                             } label: {
                                 Label("Stage Hunk", systemImage: "plus.circle")
                                     .labelStyle(.titleAndIcon)
+                                    .font(.caption)
                             }
                             .buttonStyle(.bordered)
                             .controlSize(.small)
@@ -236,24 +234,23 @@ struct DiffHunkView: View {
                             } label: {
                                 Label("Unstage Hunk", systemImage: "minus.circle")
                                     .labelStyle(.titleAndIcon)
+                                    .font(.caption)
                             }
                             .buttonStyle(.bordered)
                             .controlSize(.small)
                         }
                     }
-                    .font(DSTypography.tertiaryContent())
                     .padding(.trailing, DSSpacing.sm)
+                    .opacity(isHovered && !isDragging ? 1 : 0)
                 }
             }
             .padding(.vertical, DSSpacing.xs)
             .background(DSColors.diffHunkBackground(for: colorScheme))
             .onHover { hovering in
-                withAnimation(.fastResponse) {
-                    isHovered = hovering
-                }
+                isHovered = hovering
             }
 
-            // Lines with drag selection support
+            // Lines
             VStack(alignment: .leading, spacing: 0) {
                 ForEach(Array(hunk.lines.enumerated()), id: \.element.id) { lineIndex, line in
                     DiffLineView(
@@ -274,19 +271,29 @@ struct DiffHunkView: View {
                         showWordDiff: showWordDiff,
                         canSelect: canStage || canUnstage
                     )
-                    .background(GeometryReader { geo in
-                        Color.clear.preference(
-                            key: LineFramePreferenceKey.self,
-                            value: [lineIndex: geo.frame(in: .named("hunkLines"))]
-                        )
-                    })
                     .id("\(hunkIndex)-\(lineIndex)")
                 }
             }
-            .coordinateSpace(name: "hunkLines")
-            .onPreferenceChange(LineFramePreferenceKey.self) { frames in
-                lineFrames = frames
-            }
+            .background(
+                // Only measure frames when drag selection is possible
+                (canStage || canUnstage) ?
+                GeometryReader { geo in
+                    Color.clear.onAppear {
+                        // Calculate line frames based on line height
+                        let lineHeight = geo.size.height / CGFloat(max(hunk.lines.count, 1))
+                        var frames: [Int: CGRect] = [:]
+                        for i in 0..<hunk.lines.count {
+                            frames[i] = CGRect(
+                                x: 0,
+                                y: CGFloat(i) * lineHeight,
+                                width: geo.size.width,
+                                height: lineHeight
+                            )
+                        }
+                        lineFrames = frames
+                    }
+                } : nil
+            )
             .gesture(
                 (canStage || canUnstage) ?
                 DragGesture(minimumDistance: 10)
@@ -382,7 +389,7 @@ struct DiffLineView: View {
     var onToggleSelection: (() -> Void)? = nil
     // Word-level diff support
     var pairContent: String? = nil
-    var showWordDiff: Bool = true
+    var showWordDiff: Bool = false
     // Selection support
     var canSelect: Bool = false
 
