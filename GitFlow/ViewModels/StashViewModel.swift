@@ -56,12 +56,41 @@ final class StashViewModel: ObservableObject {
     }
 
     /// Creates a new stash.
-    func createStash(message: String? = nil, includeUntracked: Bool = false) async {
+    /// - Parameters:
+    ///   - message: Optional message for the stash.
+    ///   - includeUntracked: Whether to include untracked files.
+    ///   - includeIgnored: Whether to include ignored files (implies includeUntracked).
+    func createStash(message: String? = nil, includeUntracked: Bool = false, includeIgnored: Bool = false) async {
         isOperationInProgress = true
         defer { isOperationInProgress = false }
 
         do {
-            try await gitService.createStash(message: message, includeUntracked: includeUntracked, in: repository)
+            try await gitService.createStash(
+                message: message,
+                includeUntracked: includeUntracked,
+                includeIgnored: includeIgnored,
+                in: repository
+            )
+            await refresh()
+            error = nil
+        } catch let gitError as GitError {
+            error = gitError
+        } catch {
+            self.error = .unknown(message: error.localizedDescription)
+        }
+    }
+
+    /// Renames a stash by dropping and recreating it with a new message.
+    /// Note: This changes the stash index as it creates a new stash entry.
+    /// - Parameters:
+    ///   - stash: The stash to rename.
+    ///   - newMessage: The new message for the stash.
+    func renameStash(_ stash: Stash, to newMessage: String) async {
+        isOperationInProgress = true
+        defer { isOperationInProgress = false }
+
+        do {
+            try await gitService.renameStash(stash.refName, to: newMessage, in: repository)
             await refresh()
             error = nil
         } catch let gitError as GitError {

@@ -6,6 +6,11 @@ struct CommitHistoryView: View {
 
     @State private var showFilters: Bool = false
     @State private var searchText: String = ""
+    @State private var showGraph: Bool = true
+    @State private var graphNodes: [CommitGraphNode] = []
+
+    private let graphBuilder = CommitGraphBuilder()
+    private let rowHeight: CGFloat = 44
 
     var body: some View {
         VStack(spacing: 0) {
@@ -27,6 +32,13 @@ struct CommitHistoryView: View {
                 }
 
                 Spacer()
+
+                Button(action: { showGraph.toggle() }) {
+                    Image(systemName: showGraph ? "point.3.connected.trianglepath.dotted" : "point.3.filled.connected.trianglepath.dotted")
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(showGraph ? .blue : .secondary)
+                .help("Toggle commit graph")
 
                 Button(action: { showFilters.toggle() }) {
                     Image(systemName: showFilters ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
@@ -110,14 +122,65 @@ struct CommitHistoryView: View {
                     )
                 }
             } else {
-                List(viewModel.commits, selection: $viewModel.selectedCommit) { commit in
-                    CommitRow(commit: commit)
-                        .tag(commit)
+                ScrollViewReader { scrollProxy in
+                    ScrollView {
+                        HStack(alignment: .top, spacing: 0) {
+                            // Commit graph
+                            if showGraph && !graphNodes.isEmpty {
+                                CommitGraphView(
+                                    nodes: graphNodes,
+                                    selectedCommitId: viewModel.selectedCommit?.hash,
+                                    rowHeight: rowHeight
+                                )
+                                .padding(.leading, 8)
+                            }
+
+                            // Commit rows
+                            LazyVStack(alignment: .leading, spacing: 0) {
+                                ForEach(viewModel.commits) { commit in
+                                    CommitRow(commit: commit)
+                                        .frame(height: rowHeight)
+                                        .background(
+                                            viewModel.selectedCommit?.hash == commit.hash
+                                                ? Color.accentColor.opacity(0.2)
+                                                : Color.clear
+                                        )
+                                        .contentShape(Rectangle())
+                                        .onTapGesture {
+                                            viewModel.selectedCommit = commit
+                                        }
+                                        .id(commit.hash)
+                                }
+                            }
+                        }
+                    }
+                    .onChange(of: viewModel.selectedCommit) { newValue in
+                        if let hash = newValue?.hash {
+                            withAnimation {
+                                scrollProxy.scrollTo(hash, anchor: .center)
+                            }
+                        }
+                    }
                 }
-                .listStyle(.plain)
             }
         }
-        .onChange(of: searchText) { _, newValue in
+        .onChange(of: viewModel.commits) { newCommits in
+            // Rebuild graph when commits change
+            if showGraph {
+                graphNodes = graphBuilder.buildGraph(from: newCommits)
+            }
+        }
+        .onAppear {
+            if showGraph && graphNodes.isEmpty {
+                graphNodes = graphBuilder.buildGraph(from: viewModel.commits)
+            }
+        }
+        .onChange(of: showGraph) { newValue in
+            if newValue && graphNodes.isEmpty {
+                graphNodes = graphBuilder.buildGraph(from: viewModel.commits)
+            }
+        }
+        .onChange(of: searchText) { newValue in
             // Debounce search - only search after typing stops
             Task {
                 try? await Task.sleep(nanoseconds: 300_000_000) // 300ms

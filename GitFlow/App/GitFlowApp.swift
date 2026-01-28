@@ -70,6 +70,173 @@ struct GitFlowApp: App {
                     }
                 }
                 .keyboardShortcut("r", modifiers: .command)
+
+                Button("Command Palette") {
+                    appState.showCommandPalette = true
+                }
+                .keyboardShortcut("k", modifiers: .command)
+            }
+
+            // Repository commands
+            CommandMenu("Repository") {
+                Section {
+                    Button("Stage All Changes") {
+                        Task {
+                            await appState.repositoryViewModel?.stageAll()
+                        }
+                    }
+                    .keyboardShortcut("a", modifiers: [.command, .shift])
+                    .disabled(appState.currentRepository == nil)
+
+                    Button("Unstage All Changes") {
+                        Task {
+                            await appState.repositoryViewModel?.unstageAll()
+                        }
+                    }
+                    .keyboardShortcut("u", modifiers: [.command, .shift])
+                    .disabled(appState.currentRepository == nil)
+                }
+
+                Divider()
+
+                Section {
+                    Button("Commit...") {
+                        appState.focusCommitMessage = true
+                    }
+                    .keyboardShortcut(.return, modifiers: [.command, .shift])
+                    .disabled(appState.currentRepository == nil)
+
+                    Button("Amend Last Commit") {
+                        Task {
+                            await appState.repositoryViewModel?.commitViewModel.startAmending()
+                        }
+                    }
+                    .keyboardShortcut(.return, modifiers: [.command, .option])
+                    .disabled(appState.currentRepository == nil)
+                }
+
+                Divider()
+
+                Section {
+                    Button("Create Stash...") {
+                        appState.showCreateStash = true
+                    }
+                    .keyboardShortcut("s", modifiers: [.command, .shift])
+                    .disabled(appState.currentRepository == nil)
+                }
+            }
+
+            // Branch commands
+            CommandMenu("Branch") {
+                Button("New Branch...") {
+                    appState.showNewBranch = true
+                }
+                .keyboardShortcut("b", modifiers: [.command, .shift])
+                .disabled(appState.currentRepository == nil)
+
+                Button("Switch Branch...") {
+                    appState.showSwitchBranch = true
+                }
+                .keyboardShortcut("b", modifiers: .command)
+                .disabled(appState.currentRepository == nil)
+
+                Divider()
+
+                Button("Merge...") {
+                    appState.showMergeBranch = true
+                }
+                .keyboardShortcut("m", modifiers: [.command, .shift])
+                .disabled(appState.currentRepository == nil)
+
+                Button("Rebase...") {
+                    appState.showRebaseBranch = true
+                }
+                .keyboardShortcut("r", modifiers: [.command, .shift])
+                .disabled(appState.currentRepository == nil)
+            }
+
+            // Remote commands
+            CommandMenu("Remote") {
+                Button("Fetch") {
+                    Task {
+                        await appState.repositoryViewModel?.fetch()
+                    }
+                }
+                .keyboardShortcut("f", modifiers: [.command, .shift])
+                .disabled(appState.currentRepository == nil)
+
+                Button("Pull") {
+                    Task {
+                        await appState.repositoryViewModel?.pull()
+                    }
+                }
+                .keyboardShortcut("p", modifiers: [.command, .shift])
+                .disabled(appState.currentRepository == nil)
+
+                Button("Push") {
+                    Task {
+                        await appState.repositoryViewModel?.push()
+                    }
+                }
+                .keyboardShortcut("p", modifiers: [.command, .option])
+                .disabled(appState.currentRepository == nil)
+            }
+
+            // View commands
+            CommandMenu("View") {
+                Section {
+                    Button("Toggle Unified/Split Diff") {
+                        appState.repositoryViewModel?.diffViewModel.toggleViewMode()
+                    }
+                    .keyboardShortcut("d", modifiers: .command)
+
+                    Button("Toggle Line Numbers") {
+                        if let diffVM = appState.repositoryViewModel?.diffViewModel {
+                            diffVM.showLineNumbers.toggle()
+                        }
+                    }
+                    .keyboardShortcut("l", modifiers: .command)
+
+                    Button("Toggle Word Wrap") {
+                        if let diffVM = appState.repositoryViewModel?.diffViewModel {
+                            diffVM.wrapLines.toggle()
+                        }
+                    }
+                    .keyboardShortcut("w", modifiers: [.command, .option])
+
+                    Button("Toggle Blame") {
+                        if let diffVM = appState.repositoryViewModel?.diffViewModel {
+                            diffVM.showBlame.toggle()
+                            if diffVM.showBlame && diffVM.blameLines.isEmpty {
+                                Task { await diffVM.loadBlame() }
+                            }
+                        }
+                    }
+                    .keyboardShortcut("b", modifiers: [.command, .option])
+                }
+
+                Divider()
+
+                Section {
+                    Button("Next Change") {
+                        appState.repositoryViewModel?.diffViewModel.navigateToNextHunk()
+                    }
+                    .keyboardShortcut(.downArrow, modifiers: [.command, .option])
+
+                    Button("Previous Change") {
+                        appState.repositoryViewModel?.diffViewModel.navigateToPreviousHunk()
+                    }
+                    .keyboardShortcut(.upArrow, modifiers: [.command, .option])
+                }
+
+                Divider()
+
+                Section {
+                    Button("Search in Diff") {
+                        appState.showDiffSearch = true
+                    }
+                    .keyboardShortcut("f", modifiers: .command)
+                }
             }
         }
 

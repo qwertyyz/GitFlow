@@ -75,6 +75,12 @@ final class DiffViewModel: ObservableObject {
     /// Total number of hunks in the current diff.
     @Published private(set) var totalHunks: Int = 0
 
+    /// Selected line IDs for line-level staging.
+    @Published var selectedLineIds: Set<String> = []
+
+    /// Whether line selection mode is active.
+    @Published var isLineSelectionMode: Bool = false
+
     // MARK: - Dependencies
 
     private let repository: Repository
@@ -385,6 +391,99 @@ final class DiffViewModel: ObservableObject {
         default:
             return false
         }
+    }
+
+    // MARK: - Line-Level Staging
+
+    /// Toggles selection of a line.
+    func toggleLineSelection(_ lineId: String) {
+        if selectedLineIds.contains(lineId) {
+            selectedLineIds.remove(lineId)
+        } else {
+            selectedLineIds.insert(lineId)
+        }
+    }
+
+    /// Selects all lines in a hunk.
+    func selectAllLines(in hunk: DiffHunk) {
+        for line in hunk.lines where line.type == .addition || line.type == .deletion {
+            selectedLineIds.insert(line.id)
+        }
+    }
+
+    /// Deselects all lines.
+    func clearLineSelection() {
+        selectedLineIds.removeAll()
+    }
+
+    /// Toggles line selection mode.
+    func toggleLineSelectionMode() {
+        isLineSelectionMode.toggle()
+        if !isLineSelectionMode {
+            clearLineSelection()
+        }
+    }
+
+    /// Stages the selected lines.
+    func stageSelectedLines() async {
+        guard let diff = currentDiff, !selectedLineIds.isEmpty else { return }
+
+        do {
+            for hunk in diff.hunks {
+                let hunkLineIds = Set(hunk.lines.map(\.id)).intersection(selectedLineIds)
+                if !hunkLineIds.isEmpty {
+                    try await gitService.stageLines(hunk, lineIds: hunkLineIds, filePath: diff.path, in: repository)
+                }
+            }
+            clearLineSelection()
+            isLineSelectionMode = false
+            onStatusChanged?()
+
+            // Reload diff to reflect changes
+            if case .unstaged(let path) = diffSource {
+                await loadUnstagedDiff(for: path)
+            }
+        } catch let gitError as GitError {
+            error = gitError
+        } catch {
+            self.error = .unknown(message: error.localizedDescription)
+        }
+    }
+
+    /// Unstages the selected lines.
+    func unstageSelectedLines() async {
+        guard let diff = currentDiff, !selectedLineIds.isEmpty else { return }
+
+        do {
+            for hunk in diff.hunks {
+                let hunkLineIds = Set(hunk.lines.map(\.id)).intersection(selectedLineIds)
+                if !hunkLineIds.isEmpty {
+                    try await gitService.unstageLines(hunk, lineIds: hunkLineIds, filePath: diff.path, in: repository)
+                }
+            }
+            clearLineSelection()
+            isLineSelectionMode = false
+            onStatusChanged?()
+
+            // Reload diff to reflect changes
+            if case .staged(let path) = diffSource {
+                await loadStagedDiff(for: path)
+            }
+        } catch let gitError as GitError {
+            error = gitError
+        } catch {
+            self.error = .unknown(message: error.localizedDescription)
+        }
+    }
+
+    /// Whether there are selected lines that can be staged.
+    var canStageSelectedLines: Bool {
+        canStageHunks && !selectedLineIds.isEmpty
+    }
+
+    /// Whether there are selected lines that can be unstaged.
+    var canUnstageSelectedLines: Bool {
+        canUnstageHunks && !selectedLineIds.isEmpty
     }
 
     // MARK: - Computed Properties

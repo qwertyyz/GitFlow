@@ -52,34 +52,62 @@ struct DiffView: View {
                     )
                 } else {
                     Group {
-                        switch viewModel.viewMode {
-                        case .unified:
-                            UnifiedDiffView(
-                                diff: diff,
-                                showLineNumbers: viewModel.showLineNumbers,
-                                wrapLines: viewModel.wrapLines,
-                                searchText: searchText,
-                                currentMatchIndex: currentMatchIndex,
-                                onMatchCountChanged: { totalMatches = $0 },
-                                canStageHunks: viewModel.canStageHunks,
-                                canUnstageHunks: viewModel.canUnstageHunks,
-                                onStageHunk: { hunk in
-                                    Task {
-                                        await viewModel.stageHunk(hunk, filePath: diff.path)
-                                    }
-                                },
-                                onUnstageHunk: { hunk in
-                                    Task {
-                                        await viewModel.unstageHunk(hunk, filePath: diff.path)
-                                    }
+                        // Use virtualized view for large files
+                        if viewModel.needsVirtualizedRendering {
+                            VStack(spacing: 0) {
+                                // Large file warning
+                                HStack {
+                                    Image(systemName: "exclamationmark.triangle")
+                                        .foregroundStyle(.orange)
+                                    Text("Large file (\(totalLineCount(diff)) lines) - Using optimized rendering")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                    Spacer()
                                 }
-                            )
-                        case .split:
-                            SplitDiffView(
-                                diff: diff,
-                                showLineNumbers: viewModel.showLineNumbers,
-                                searchText: searchText
-                            )
+                                .padding(8)
+                                .background(Color.orange.opacity(0.1))
+
+                                VirtualizedDiffView(
+                                    diff: diff,
+                                    showLineNumbers: viewModel.showLineNumbers,
+                                    wrapLines: viewModel.wrapLines
+                                )
+                            }
+                        } else {
+                            switch viewModel.viewMode {
+                            case .unified:
+                                UnifiedDiffView(
+                                    diff: diff,
+                                    showLineNumbers: viewModel.showLineNumbers,
+                                    wrapLines: viewModel.wrapLines,
+                                    searchText: searchText,
+                                    currentMatchIndex: currentMatchIndex,
+                                    onMatchCountChanged: { totalMatches = $0 },
+                                    canStageHunks: viewModel.canStageHunks,
+                                    canUnstageHunks: viewModel.canUnstageHunks,
+                                    onStageHunk: { hunk in
+                                        Task {
+                                            await viewModel.stageHunk(hunk, filePath: diff.path)
+                                        }
+                                    },
+                                    onUnstageHunk: { hunk in
+                                        Task {
+                                            await viewModel.unstageHunk(hunk, filePath: diff.path)
+                                        }
+                                    },
+                                    isLineSelectionMode: viewModel.isLineSelectionMode,
+                                    selectedLineIds: $viewModel.selectedLineIds,
+                                    onToggleLineSelection: { lineId in
+                                        viewModel.toggleLineSelection(lineId)
+                                    }
+                                )
+                            case .split:
+                                SplitDiffView(
+                                    diff: diff,
+                                    showLineNumbers: viewModel.showLineNumbers,
+                                    searchText: searchText
+                                )
+                            }
                         }
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -118,6 +146,10 @@ struct DiffView: View {
     private func navigateMatch(direction: Int) {
         guard totalMatches > 0 else { return }
         currentMatchIndex = (currentMatchIndex + direction + totalMatches) % totalMatches
+    }
+
+    private func totalLineCount(_ diff: FileDiff) -> Int {
+        diff.hunks.reduce(0) { $0 + $1.lines.count }
     }
 }
 

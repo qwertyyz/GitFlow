@@ -29,7 +29,7 @@ struct CommandPaletteView: View {
                     // Results
                     CommandPaletteResults(viewModel: viewModel)
                 }
-                .frame(width: 500, maxHeight: 400)
+                .frame(width: 500).frame(maxHeight: 400)
                 .background(.regularMaterial)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .shadow(radius: 20)
@@ -38,22 +38,6 @@ struct CommandPaletteView: View {
             }
             .onAppear {
                 isSearchFocused = true
-            }
-            .onKeyPress(.upArrow) {
-                viewModel.moveUp()
-                return .handled
-            }
-            .onKeyPress(.downArrow) {
-                viewModel.moveDown()
-                return .handled
-            }
-            .onKeyPress(.return) {
-                viewModel.executeSelected()
-                return .handled
-            }
-            .onKeyPress(.escape) {
-                viewModel.hide()
-                return .handled
             }
         }
     }
@@ -128,7 +112,7 @@ private struct CommandPaletteResults: View {
                     }
                 }
             }
-            .onChange(of: viewModel.selectedIndex) { _, newValue in
+            .onChange(of: viewModel.selectedIndex) { newValue in
                 withAnimation {
                     proxy.scrollTo(newValue, anchor: .center)
                 }

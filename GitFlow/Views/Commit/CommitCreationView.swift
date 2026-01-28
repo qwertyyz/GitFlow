@@ -99,25 +99,10 @@ struct CommitCreationView: View {
                 .background(Color(NSColor.controlBackgroundColor).opacity(0.5))
             }
 
-            // Message input
-            TextEditor(text: $viewModel.commitMessage)
-                .font(.system(.body, design: .monospaced))
+            // Message input with spell checking enabled
+            SpellCheckTextEditor(text: $viewModel.commitMessage, placeholder: viewModel.isAmending ? "Enter new commit message..." : "Enter commit message...")
                 .frame(minHeight: 80, maxHeight: 150)
                 .focused($isMessageFocused)
-                .scrollContentBackground(.hidden)
-                .padding(4)
-                .background(Color(NSColor.textBackgroundColor))
-                .clipShape(RoundedRectangle(cornerRadius: 4))
-                .overlay(alignment: .topLeading) {
-                    if viewModel.commitMessage.isEmpty {
-                        Text(viewModel.isAmending ? "Enter new commit message..." : "Enter commit message...")
-                            .font(.system(.body, design: .monospaced))
-                            .foregroundStyle(.tertiary)
-                            .padding(.leading, 5)
-                            .padding(.top, 8)
-                            .allowsHitTesting(false)
-                    }
-                }
                 .padding(.horizontal)
 
             // Guidelines

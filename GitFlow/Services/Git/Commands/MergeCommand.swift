@@ -151,6 +151,119 @@ struct IsMergingCommand: GitCommand {
     }
 }
 
+/// Command to perform a dry-run merge preview.
+/// This attempts to merge without committing and then aborts.
+struct MergePreviewCommand: VoidGitCommand {
+    let branchName: String
+
+    var arguments: [String] {
+        ["merge", "--no-commit", "--no-ff", branchName]
+    }
+}
+
+/// Command to get merge base (common ancestor).
+struct MergeBaseCommand: GitCommand {
+    typealias Result = String?
+
+    let branch1: String
+    let branch2: String
+
+    var arguments: [String] {
+        ["merge-base", branch1, branch2]
+    }
+
+    func parse(output: String) throws -> String? {
+        let hash = output.trimmingCharacters(in: .whitespacesAndNewlines)
+        return hash.isEmpty ? nil : hash
+    }
+}
+
+/// Command to get the diff-tree summary between two commits.
+struct DiffTreeSummaryCommand: GitCommand {
+    typealias Result = [MergePreviewChange]
+
+    let base: String
+    let target: String
+
+    var arguments: [String] {
+        ["diff", "--stat", "--name-status", "\(base)...\(target)"]
+    }
+
+    func parse(output: String) throws -> [MergePreviewChange] {
+        var changes: [MergePreviewChange] = []
+
+        for line in output.components(separatedBy: .newlines) {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            guard !trimmed.isEmpty else { continue }
+
+            // Parse name-status format: <status>\t<path>
+            let parts = trimmed.components(separatedBy: "\t")
+            guard parts.count >= 2 else { continue }
+
+            let status = parts[0]
+            let path = parts[1]
+
+            let changeType: MergePreviewChangeType
+            switch status.first {
+            case "A": changeType = .added
+            case "D": changeType = .deleted
+            case "M": changeType = .modified
+            case "R": changeType = .renamed
+            case "C": changeType = .copied
+            default: changeType = .modified
+            }
+
+            changes.append(MergePreviewChange(
+                path: path,
+                changeType: changeType,
+                oldPath: status.first == "R" && parts.count > 2 ? parts[1] : nil
+            ))
+        }
+
+        return changes
+    }
+}
+
+/// Represents a file change in merge preview.
+struct MergePreviewChange: Identifiable, Equatable {
+    let id = UUID()
+    let path: String
+    let changeType: MergePreviewChangeType
+    let oldPath: String?
+}
+
+/// Type of change in merge preview.
+enum MergePreviewChangeType: String {
+    case added = "Added"
+    case deleted = "Deleted"
+    case modified = "Modified"
+    case renamed = "Renamed"
+    case copied = "Copied"
+}
+
+/// Result of a merge preview.
+struct MergePreviewResult: Equatable {
+    let sourceBranch: String
+    let targetBranch: String
+    let mergeBase: String?
+    let commitCount: Int
+    let commits: [Commit]
+    let fileChanges: [MergePreviewChange]
+    let hasConflicts: Bool
+    let conflictedFiles: [ConflictedFile]
+
+    static let empty = MergePreviewResult(
+        sourceBranch: "",
+        targetBranch: "",
+        mergeBase: nil,
+        commitCount: 0,
+        commits: [],
+        fileChanges: [],
+        hasConflicts: false,
+        conflictedFiles: []
+    )
+}
+
 /// Parser for conflict markers in file content.
 enum ConflictMarkerParser {
     /// Parses conflict sections from file content.

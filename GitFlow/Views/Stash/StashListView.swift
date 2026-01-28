@@ -6,6 +6,7 @@ struct StashListView: View {
 
     @State private var showCreateStash: Bool = false
     @State private var stashToDelete: Stash?
+    @State private var stashToRename: Stash?
     @State private var showClearConfirmation: Bool = false
 
     var body: some View {
@@ -52,6 +53,10 @@ struct StashListView: View {
                                 Task { await viewModel.popStash(stash) }
                             }
                             Divider()
+                            Button("Rename...") {
+                                stashToRename = stash
+                            }
+                            Divider()
                             Button("Drop", role: .destructive) {
                                 stashToDelete = stash
                             }
@@ -82,6 +87,12 @@ struct StashListView: View {
         }
         .sheet(isPresented: $showCreateStash) {
             CreateStashSheet(viewModel: viewModel, isPresented: $showCreateStash)
+        }
+        .sheet(item: $stashToRename) { stash in
+            RenameStashSheet(viewModel: viewModel, stash: stash, isPresented: .init(
+                get: { stashToRename != nil },
+                set: { if !$0 { stashToRename = nil } }
+            ))
         }
         .confirmationDialog(
             "Drop Stash",
@@ -161,6 +172,7 @@ struct CreateStashSheet: View {
 
     @State private var message: String = ""
     @State private var includeUntracked: Bool = false
+    @State private var includeIgnored: Bool = false
 
     var body: some View {
         VStack(spacing: 16) {
@@ -172,6 +184,20 @@ struct CreateStashSheet: View {
                     .textFieldStyle(.roundedBorder)
 
                 Toggle("Include untracked files", isOn: $includeUntracked)
+                    .disabled(includeIgnored) // Ignored implies untracked
+
+                Toggle("Include ignored files", isOn: $includeIgnored)
+                    .onChange(of: includeIgnored) { newValue in
+                        if newValue {
+                            includeUntracked = true
+                        }
+                    }
+
+                if includeIgnored {
+                    Text("Warning: This will include all ignored files (e.g., build artifacts, node_modules)")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
             }
 
             HStack {
@@ -186,7 +212,8 @@ struct CreateStashSheet: View {
                     Task {
                         await viewModel.createStash(
                             message: message.isEmpty ? nil : message,
-                            includeUntracked: includeUntracked
+                            includeUntracked: includeUntracked,
+                            includeIgnored: includeIgnored
                         )
                         isPresented = false
                     }
@@ -198,6 +225,67 @@ struct CreateStashSheet: View {
         }
         .padding()
         .frame(width: 350)
+    }
+}
+
+/// Sheet for renaming a stash.
+struct RenameStashSheet: View {
+    @ObservedObject var viewModel: StashViewModel
+    let stash: Stash
+    @Binding var isPresented: Bool
+
+    @State private var newMessage: String = ""
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Text("Rename Stash")
+                .font(.headline)
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Current message:")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Text(stash.message)
+                    .font(.body.monospaced())
+                    .foregroundStyle(.secondary)
+                    .padding(8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color(NSColor.controlBackgroundColor))
+                    .cornerRadius(4)
+
+                Text("New message:")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                TextField("Enter new stash message", text: $newMessage)
+                    .textFieldStyle(.roundedBorder)
+            }
+
+            HStack {
+                Button("Cancel") {
+                    isPresented = false
+                }
+                .keyboardShortcut(.cancelAction)
+
+                Spacer()
+
+                Button("Rename") {
+                    Task {
+                        await viewModel.renameStash(stash, to: newMessage)
+                        isPresented = false
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .keyboardShortcut(.defaultAction)
+                .disabled(newMessage.isEmpty || viewModel.isOperationInProgress)
+            }
+        }
+        .padding()
+        .frame(width: 400)
+        .onAppear {
+            newMessage = stash.message
+        }
     }
 }
 

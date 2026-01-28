@@ -416,12 +416,12 @@ final class CommandPaletteViewModel: ObservableObject {
         defer { isSearching = false }
 
         do {
-            let commits = try await gitService.searchCommits(message: query, limit: 20, in: repository)
+            let commits = try await gitService.searchCommits(query: query, limit: 20, in: repository)
             searchResults = commits.map { commit in
                 GlobalSearchResult(
                     type: .commit,
-                    title: commit.message.components(separatedBy: .newlines).first ?? "",
-                    subtitle: "\(commit.shortHash) by \(commit.author)",
+                    title: commit.subject,
+                    subtitle: "\(commit.shortHash) by \(commit.authorName)",
                     path: commit.hash
                 ) {
                     // View commit action
@@ -449,7 +449,7 @@ final class CommandPaletteViewModel: ObservableObject {
                 GlobalSearchResult(
                     type: .branch,
                     title: branch.name,
-                    subtitle: branch.isRemote ? "Remote" : (branch.isHead ? "Current" : "Local"),
+                    subtitle: branch.isRemote ? "Remote" : (branch.isCurrent ? "Current" : "Local"),
                     path: branch.name
                 ) {
                     // Checkout branch action
@@ -487,11 +487,11 @@ final class CommandPaletteViewModel: ObservableObject {
 
         // Search commits
         do {
-            let commits = try await gitService.searchCommits(message: query, limit: 5, in: repository)
+            let commits = try await gitService.searchCommits(query: query, limit: 5, in: repository)
             allResults.append(contentsOf: commits.map { commit in
                 GlobalSearchResult(
                     type: .commit,
-                    title: commit.message.components(separatedBy: .newlines).first ?? "",
+                    title: commit.subject,
                     subtitle: commit.shortHash
                 ) { }
             })

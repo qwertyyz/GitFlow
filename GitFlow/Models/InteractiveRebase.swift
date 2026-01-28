@@ -67,7 +67,7 @@ enum RebaseAction: String, CaseIterable, Identifiable {
 }
 
 /// A commit entry in the interactive rebase sequence.
-struct RebaseEntry: Identifiable, Equatable {
+struct RebaseEntry: Identifiable, Equatable, Hashable {
     let id = UUID()
 
     /// The commit hash.

@@ -12,9 +12,43 @@ struct UnifiedDiffView: View {
     var canUnstageHunks: Bool = false
     var onStageHunk: ((DiffHunk) -> Void)?
     var onUnstageHunk: ((DiffHunk) -> Void)?
+    // Line selection support
+    var isLineSelectionMode: Bool = false
+    @Binding var selectedLineIds: Set<String>
+    var onToggleLineSelection: ((String) -> Void)?
 
     @Environment(\.colorScheme) private var colorScheme
     @State private var matchLocations: [MatchLocation] = []
+
+    init(
+        diff: FileDiff,
+        showLineNumbers: Bool,
+        wrapLines: Bool = false,
+        searchText: String = "",
+        currentMatchIndex: Int = 0,
+        onMatchCountChanged: ((Int) -> Void)? = nil,
+        canStageHunks: Bool = false,
+        canUnstageHunks: Bool = false,
+        onStageHunk: ((DiffHunk) -> Void)? = nil,
+        onUnstageHunk: ((DiffHunk) -> Void)? = nil,
+        isLineSelectionMode: Bool = false,
+        selectedLineIds: Binding<Set<String>> = .constant([]),
+        onToggleLineSelection: ((String) -> Void)? = nil
+    ) {
+        self.diff = diff
+        self.showLineNumbers = showLineNumbers
+        self.wrapLines = wrapLines
+        self.searchText = searchText
+        self.currentMatchIndex = currentMatchIndex
+        self.onMatchCountChanged = onMatchCountChanged
+        self.canStageHunks = canStageHunks
+        self.canUnstageHunks = canUnstageHunks
+        self.onStageHunk = onStageHunk
+        self.onUnstageHunk = onUnstageHunk
+        self.isLineSelectionMode = isLineSelectionMode
+        self._selectedLineIds = selectedLineIds
+        self.onToggleLineSelection = onToggleLineSelection
+    }
 
     var body: some View {
         GeometryReader { geometry in
@@ -34,7 +68,12 @@ struct UnifiedDiffView: View {
                                 canStage: canStageHunks,
                                 canUnstage: canUnstageHunks,
                                 onStage: { onStageHunk?(hunk) },
-                                onUnstage: { onUnstageHunk?(hunk) }
+                                onUnstage: { onUnstageHunk?(hunk) },
+                                isLineSelectionMode: isLineSelectionMode,
+                                selectedLineIds: selectedLineIds,
+                                onSelectLines: { newSelection in
+                                    selectedLineIds = newSelection
+                                }
                             )
                         }
                     }
@@ -104,6 +143,15 @@ struct MatchLocation: Equatable {
     let range: Range<String.Index>
 }
 
+/// Preference key for tracking line frames during drag selection.
+struct LineFramePreferenceKey: PreferenceKey {
+    static var defaultValue: [Int: CGRect] = [:]
+
+    static func reduce(value: inout [Int: CGRect], nextValue: () -> [Int: CGRect]) {
+        value.merge(nextValue()) { _, new in new }
+    }
+}
+
 /// View for a single diff hunk.
 struct DiffHunkView: View {
     let hunk: DiffHunk
@@ -118,8 +166,29 @@ struct DiffHunkView: View {
     var canUnstage: Bool = false
     var onStage: (() -> Void)?
     var onUnstage: (() -> Void)?
+    // Line selection support
+    var isLineSelectionMode: Bool = false
+    var selectedLineIds: Set<String> = []
+    var onSelectLines: ((Set<String>) -> Void)?
+    // Word-level diff
+    var showWordDiff: Bool = true
 
     @State private var isHovered: Bool = false
+    @State private var isDragging: Bool = false
+    @State private var dragStartIndex: Int?
+    @State private var lineFrames: [Int: CGRect] = [:]
+
+    /// Cached line pairs for word-level diffing.
+    private var linePairs: [String: String] {
+        showWordDiff ? hunk.findLinePairs() : [:]
+    }
+
+    /// Get selectable line indices (only additions and deletions)
+    private var selectableLineIndices: [Int] {
+        hunk.lines.enumerated().compactMap { index, line in
+            (line.type == .addition || line.type == .deletion) ? index : nil
+        }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -148,7 +217,7 @@ struct DiffHunkView: View {
 
                 Spacer()
 
-                if isHovered {
+                if isHovered && !isDragging {
                     HStack(spacing: DSSpacing.sm) {
                         if canStage {
                             Button {
@@ -184,21 +253,106 @@ struct DiffHunkView: View {
                 }
             }
 
-            // Lines
-            ForEach(Array(hunk.lines.enumerated()), id: \.element.id) { lineIndex, line in
-                DiffLineView(
-                    line: line,
-                    lineId: "\(hunkIndex)-\(lineIndex)",
-                    showLineNumbers: showLineNumbers,
-                    wrapLines: wrapLines,
-                    colorScheme: colorScheme,
-                    searchText: searchText,
-                    isCurrentMatch: isCurrentMatch(hunkIndex: hunkIndex, lineIndex: lineIndex),
-                    hasMatch: hasMatch(hunkIndex: hunkIndex, lineIndex: lineIndex)
-                )
-                .id("\(hunkIndex)-\(lineIndex)")
+            // Lines with drag selection support
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(Array(hunk.lines.enumerated()), id: \.element.id) { lineIndex, line in
+                    DiffLineView(
+                        line: line,
+                        lineId: "\(hunkIndex)-\(lineIndex)",
+                        showLineNumbers: showLineNumbers,
+                        wrapLines: wrapLines,
+                        colorScheme: colorScheme,
+                        searchText: searchText,
+                        isCurrentMatch: isCurrentMatch(hunkIndex: hunkIndex, lineIndex: lineIndex),
+                        hasMatch: hasMatch(hunkIndex: hunkIndex, lineIndex: lineIndex),
+                        isLineSelectionMode: isLineSelectionMode,
+                        isSelected: selectedLineIds.contains(line.id),
+                        onToggleSelection: {
+                            toggleLine(line.id)
+                        },
+                        pairContent: linePairs[line.id],
+                        showWordDiff: showWordDiff,
+                        canSelect: canStage || canUnstage
+                    )
+                    .background(GeometryReader { geo in
+                        Color.clear.preference(
+                            key: LineFramePreferenceKey.self,
+                            value: [lineIndex: geo.frame(in: .named("hunkLines"))]
+                        )
+                    })
+                    .id("\(hunkIndex)-\(lineIndex)")
+                }
+            }
+            .coordinateSpace(name: "hunkLines")
+            .onPreferenceChange(LineFramePreferenceKey.self) { frames in
+                lineFrames = frames
+            }
+            .gesture(
+                (canStage || canUnstage) ?
+                DragGesture(minimumDistance: 10)
+                    .onChanged { value in
+                        handleDrag(at: value.location, startLocation: value.startLocation)
+                    }
+                    .onEnded { _ in
+                        isDragging = false
+                        dragStartIndex = nil
+                    }
+                : nil
+            )
+        }
+    }
+
+    private func toggleLine(_ lineId: String) {
+        var newSelection = selectedLineIds
+        if newSelection.contains(lineId) {
+            newSelection.remove(lineId)
+        } else {
+            newSelection.insert(lineId)
+        }
+        onSelectLines?(newSelection)
+    }
+
+    private func handleDrag(at location: CGPoint, startLocation: CGPoint) {
+        // Find which line the drag started on
+        if dragStartIndex == nil {
+            dragStartIndex = lineIndexAt(startLocation)
+            isDragging = true
+        }
+
+        guard let startIdx = dragStartIndex else { return }
+
+        // Find current line
+        guard let currentIdx = lineIndexAt(location) else { return }
+
+        // Select all lines between start and current
+        let minIdx = min(startIdx, currentIdx)
+        let maxIdx = max(startIdx, currentIdx)
+
+        var newSelection = Set<String>()
+        for idx in minIdx...maxIdx {
+            let line = hunk.lines[idx]
+            if line.type == .addition || line.type == .deletion {
+                newSelection.insert(line.id)
             }
         }
+
+        onSelectLines?(newSelection)
+    }
+
+    private func lineIndexAt(_ point: CGPoint) -> Int? {
+        for (index, frame) in lineFrames {
+            if point.y >= frame.minY && point.y <= frame.maxY {
+                return index
+            }
+        }
+        // If above all lines, return first; if below, return last
+        if point.y < 0 {
+            return 0
+        }
+        if let maxIndex = lineFrames.keys.max() {
+            return maxIndex
+        }
+        return nil
     }
 
     private func isCurrentMatch(hunkIndex: Int, lineIndex: Int) -> Bool {
@@ -222,9 +376,28 @@ struct DiffLineView: View {
     var searchText: String = ""
     var isCurrentMatch: Bool = false
     var hasMatch: Bool = false
+    // Line selection support
+    var isLineSelectionMode: Bool = false
+    var isSelected: Bool = false
+    var onToggleSelection: (() -> Void)? = nil
+    // Word-level diff support
+    var pairContent: String? = nil
+    var showWordDiff: Bool = true
+    // Selection support
+    var canSelect: Bool = false
 
     var body: some View {
         HStack(alignment: .top, spacing: 0) {
+            // Selection indicator (shown when line is selected)
+            if canSelect && (line.type == .addition || line.type == .deletion) {
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 10))
+                    .foregroundStyle(isSelected ? .blue : .secondary.opacity(0.3))
+                    .frame(width: 16)
+            } else if canSelect {
+                Color.clear.frame(width: 16)
+            }
+
             if showLineNumbers {
                 HStack(spacing: 0) {
                     typeIndicator
@@ -248,12 +421,20 @@ struct DiffLineView: View {
                 .foregroundStyle(prefixColor)
                 .frame(width: 14)
 
-            // Content with search highlighting
+            // Content with word-level diff and/or search highlighting
             if !searchText.isEmpty && hasMatch {
                 HighlightedText(
                     text: line.content,
                     searchText: searchText,
                     isCurrentMatch: isCurrentMatch,
+                    wrapLines: wrapLines
+                )
+            } else if showWordDiff && pairContent != nil && (line.type == .addition || line.type == .deletion) {
+                WordDiffText(
+                    content: line.content,
+                    pairContent: pairContent,
+                    isAddition: line.type == .addition,
+                    colorScheme: colorScheme,
                     wrapLines: wrapLines
                 )
             } else {
@@ -277,6 +458,12 @@ struct DiffLineView: View {
         .padding(.horizontal, DSSpacing.sm)
         .padding(.vertical, 1)
         .background(backgroundColor)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if canSelect && (line.type == .addition || line.type == .deletion) {
+                onToggleSelection?()
+            }
+        }
     }
 
     @ViewBuilder
@@ -306,6 +493,10 @@ struct DiffLineView: View {
     private var backgroundColor: Color {
         if isCurrentMatch {
             return Color.yellow.opacity(0.3)
+        }
+
+        if isSelected {
+            return Color.blue.opacity(0.2)
         }
 
         switch line.type {
@@ -378,6 +569,49 @@ struct HighlightedText: View {
 struct HighlightPart {
     let text: String
     let isHighlighted: Bool
+}
+
+/// View that renders word-level diff highlighting.
+struct WordDiffText: View {
+    let content: String
+    let pairContent: String?
+    let isAddition: Bool
+    let colorScheme: ColorScheme
+    var wrapLines: Bool = false
+
+    var body: some View {
+        let segments = WordDiff.computeForLine(
+            content: content,
+            pairContent: pairContent,
+            isAddition: isAddition
+        )
+
+        HStack(spacing: 0) {
+            ForEach(segments) { segment in
+                Text(segment.text)
+                    .background(backgroundFor(segment.type))
+            }
+        }
+        .lineLimit(wrapLines ? nil : 1)
+        .fixedSize(horizontal: !wrapLines, vertical: false)
+    }
+
+    private func backgroundFor(_ type: WordDiffSegment.SegmentType) -> Color {
+        switch type {
+        case .unchanged:
+            return .clear
+        case .added:
+            // Darker green for word-level additions
+            return colorScheme == .dark
+                ? Color.green.opacity(0.4)
+                : Color.green.opacity(0.35)
+        case .removed:
+            // Darker red for word-level deletions
+            return colorScheme == .dark
+                ? Color.red.opacity(0.4)
+                : Color.red.opacity(0.35)
+        }
+    }
 }
 
 #Preview {

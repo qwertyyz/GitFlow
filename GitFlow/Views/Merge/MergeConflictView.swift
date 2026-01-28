@@ -170,7 +170,7 @@ private struct ConflictFileList: View {
                     .tag(file)
             }
             .listStyle(.inset)
-            .onChange(of: viewModel.selectedFile) { _, newFile in
+            .onChange(of: viewModel.selectedFile) { newFile in
                 if let file = newFile {
                     Task { await viewModel.loadFileContent(for: file) }
                 }

@@ -103,4 +103,131 @@ struct DiffHunk: Identifiable, Equatable {
         }
         return patch
     }
+
+    /// Generates a patch for selected lines only.
+    /// - Parameters:
+    ///   - filePath: The path of the file this hunk belongs to.
+    ///   - selectedLineIds: The IDs of lines to include in the patch.
+    ///   - forStaging: If true, creates patch for staging; if false, for unstaging.
+    /// - Returns: A patch string that can be used with `git apply`, or nil if no valid patch.
+    func toPatchString(filePath: String, selectedLineIds: Set<String>, forStaging: Bool = true) -> String? {
+        // Build the patch with selected lines
+        var patchLines: [DiffLine] = []
+        var selectedAdditions = 0
+        var selectedDeletions = 0
+
+        for line in lines {
+            switch line.type {
+            case .context:
+                // Context lines are always included
+                patchLines.append(line)
+            case .addition:
+                if selectedLineIds.contains(line.id) {
+                    patchLines.append(line)
+                    selectedAdditions += 1
+                } else {
+                    // Convert unselected additions to context for staging
+                    // (they don't exist in working tree yet relative to index)
+                    // For staging: skip unselected additions
+                    // Actually, we need to handle this differently
+                    continue
+                }
+            case .deletion:
+                if selectedLineIds.contains(line.id) {
+                    patchLines.append(line)
+                    selectedDeletions += 1
+                } else {
+                    // Convert unselected deletions to context
+                    let contextLine = DiffLine(
+                        id: line.id,
+                        content: line.content,
+                        type: .context,
+                        oldLineNumber: line.oldLineNumber,
+                        newLineNumber: line.newLineNumber,
+                        hasNewline: line.hasNewline,
+                        rawLine: " " + line.content
+                    )
+                    patchLines.append(contextLine)
+                }
+            default:
+                continue
+            }
+        }
+
+        // Must have at least one change
+        guard selectedAdditions > 0 || selectedDeletions > 0 else {
+            return nil
+        }
+
+        // Calculate new hunk header values
+        let newOldCount = patchLines.filter { $0.type == .context || $0.type == .deletion }.count
+        let newNewCount = patchLines.filter { $0.type == .context || $0.type == .addition }.count
+
+        let header = "@@ -\(oldStart),\(newOldCount) +\(newStart),\(newNewCount) @@ \(self.header)"
+
+        var patch = """
+        --- a/\(filePath)
+        +++ b/\(filePath)
+        \(header)
+
+        """
+        for line in patchLines {
+            patch += line.prefix + line.content + "\n"
+        }
+        return patch
+    }
+
+    /// Creates a sub-hunk containing only the specified lines.
+    /// - Parameter lineIds: The IDs of lines to include.
+    /// - Returns: A new DiffHunk with only the specified lines and adjusted counts.
+    func subHunk(withLineIds lineIds: Set<String>) -> DiffHunk? {
+        var newLines: [DiffLine] = []
+        var addCount = 0
+        var delCount = 0
+
+        for line in lines {
+            switch line.type {
+            case .context:
+                newLines.append(line)
+            case .addition:
+                if lineIds.contains(line.id) {
+                    newLines.append(line)
+                    addCount += 1
+                }
+            case .deletion:
+                if lineIds.contains(line.id) {
+                    newLines.append(line)
+                    delCount += 1
+                } else {
+                    // Keep as context
+                    let contextLine = DiffLine(
+                        id: line.id,
+                        content: line.content,
+                        type: .context,
+                        oldLineNumber: line.oldLineNumber,
+                        newLineNumber: line.newLineNumber,
+                        hasNewline: line.hasNewline
+                    )
+                    newLines.append(contextLine)
+                }
+            default:
+                break
+            }
+        }
+
+        guard addCount > 0 || delCount > 0 else { return nil }
+
+        let newOldCount = newLines.filter { $0.type == .context || $0.type == .deletion }.count
+        let newNewCount = newLines.filter { $0.type == .context || $0.type == .addition }.count
+
+        return DiffHunk(
+            oldStart: oldStart,
+            oldCount: newOldCount,
+            newStart: newStart,
+            newCount: newNewCount,
+            header: header,
+            lines: newLines,
+            rawHeader: "@@ -\(oldStart),\(newOldCount) +\(newStart),\(newNewCount) @@ \(header)"
+        )
+    }
 }

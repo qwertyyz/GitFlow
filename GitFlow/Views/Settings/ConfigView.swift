@@ -138,7 +138,7 @@ private struct IdentitySettingsView: View {
 
                     TextField("Your Name", text: $viewModel.userName)
                         .textFieldStyle(.roundedBorder)
-                        .onChange(of: viewModel.userName) { hasChanges = true }
+                        .onChange(of: viewModel.userName) { _ in hasChanges = true }
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
@@ -148,7 +148,7 @@ private struct IdentitySettingsView: View {
 
                     TextField("your.email@example.com", text: $viewModel.userEmail)
                         .textFieldStyle(.roundedBorder)
-                        .onChange(of: viewModel.userEmail) { hasChanges = true }
+                        .onChange(of: viewModel.userEmail) { _ in hasChanges = true }
                 }
             } header: {
                 Label("Git Identity", systemImage: "person.circle")

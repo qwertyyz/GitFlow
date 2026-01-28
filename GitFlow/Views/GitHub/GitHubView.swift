@@ -44,7 +44,10 @@ struct GitHubView: View {
             await viewModel.initialize()
         }
         .sheet(isPresented: $showTokenSheet) {
-            GitHubTokenSheet(token: $viewModel.githubToken, isPresented: $showTokenSheet)
+            GitHubTokenSheet(
+                token: $viewModel.githubToken,
+                isPresented: $showTokenSheet
+            )
         }
         .alert("GitHub Error", isPresented: .init(
             get: { viewModel.error != nil },
@@ -72,16 +75,21 @@ struct GitHubView: View {
                 .font(.system(size: 48))
                 .foregroundStyle(.secondary)
 
-            Text("GitHub Authentication Required")
+            Text("GitHub Access Token Required")
                 .font(.headline)
 
-            Text("Add a GitHub personal access token to view issues and pull requests.")
+            Text("Add a personal access token to view issues and pull requests.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 
-            Button("Add Token") {
+            Button {
                 showTokenSheet = true
+            } label: {
+                HStack {
+                    Image(systemName: "key.fill")
+                    Text("Add Access Token")
+                }
             }
             .buttonStyle(.borderedProminent)
         }
@@ -174,6 +182,10 @@ private struct GitHubHeader: View {
                         Button(action: { Task { await viewModel.refresh() } }) {
                             Label("Refresh", systemImage: "arrow.clockwise")
                         }
+
+                        Button(role: .destructive, action: { viewModel.githubToken = "" }) {
+                            Label("Remove Token", systemImage: "trash")
+                        }
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
@@ -224,7 +236,7 @@ private struct PullRequestsListView: View {
         .task {
             await viewModel.loadPullRequests()
         }
-        .onChange(of: viewModel.stateFilter) {
+        .onChange(of: viewModel.stateFilter) { _ in
             Task { await viewModel.loadPullRequests() }
         }
     }
@@ -374,7 +386,7 @@ private struct IssuesListView: View {
         .task {
             await viewModel.loadIssues()
         }
-        .onChange(of: viewModel.stateFilter) {
+        .onChange(of: viewModel.stateFilter) { _ in
             Task { await viewModel.loadIssues() }
         }
     }

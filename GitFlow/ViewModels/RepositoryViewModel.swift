@@ -35,7 +35,7 @@ final class RepositoryViewModel: ObservableObject {
 
     // MARK: - Services
 
-    private let gitService: GitService
+    let gitService: GitService
 
     // MARK: - Initialization
 
@@ -96,6 +96,36 @@ final class RepositoryViewModel: ObservableObject {
     func unstageFiles(_ paths: [String]) async {
         await statusViewModel.unstageFiles(paths)
         diffViewModel.clearDiff()
+    }
+
+    /// Stages all modified files.
+    func stageAll() async {
+        await statusViewModel.stageAll()
+        diffViewModel.clearDiff()
+    }
+
+    /// Unstages all staged files.
+    func unstageAll() async {
+        await statusViewModel.unstageAll()
+        diffViewModel.clearDiff()
+    }
+
+    /// Fetches from all remotes.
+    func fetch() async {
+        await remoteViewModel.fetchAll()
+        await refresh()
+    }
+
+    /// Pulls from the current remote.
+    func pull() async {
+        await remoteViewModel.pull()
+        await refresh()
+    }
+
+    /// Pushes to the current remote.
+    func push() async {
+        await remoteViewModel.push()
+        await refresh()
     }
 
     /// Creates a commit with the staged changes.

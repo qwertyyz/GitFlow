@@ -3,7 +3,7 @@ import Foundation
 /// Main facade for Git operations.
 /// Provides a high-level interface for all Git commands.
 actor GitService {
-    private let executor: GitExecutor
+    let executor: GitExecutor
 
     init(executor: GitExecutor = GitExecutor()) {
         self.executor = executor
@@ -117,6 +117,42 @@ actor GitService {
     ///   - repository: The repository.
     func unstageHunk(_ hunk: DiffHunk, filePath: String, in repository: Repository) async throws {
         let patchContent = hunk.toPatchString(filePath: filePath)
+        let command = UnstageHunkCommand()
+        _ = try await executor.executeWithStdinOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL,
+            stdinContent: patchContent
+        )
+    }
+
+    /// Stages specific lines from a hunk.
+    /// - Parameters:
+    ///   - hunk: The hunk containing the lines.
+    ///   - lineIds: The IDs of lines to stage.
+    ///   - filePath: The path of the file containing the hunk.
+    ///   - repository: The repository.
+    func stageLines(_ hunk: DiffHunk, lineIds: Set<String>, filePath: String, in repository: Repository) async throws {
+        guard let patchContent = hunk.toPatchString(filePath: filePath, selectedLineIds: lineIds, forStaging: true) else {
+            throw GitError.unknown(message: "No valid lines to stage")
+        }
+        let command = StageHunkCommand()
+        _ = try await executor.executeWithStdinOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL,
+            stdinContent: patchContent
+        )
+    }
+
+    /// Unstages specific lines from a hunk.
+    /// - Parameters:
+    ///   - hunk: The hunk containing the lines.
+    ///   - lineIds: The IDs of lines to unstage.
+    ///   - filePath: The path of the file containing the hunk.
+    ///   - repository: The repository.
+    func unstageLines(_ hunk: DiffHunk, lineIds: Set<String>, filePath: String, in repository: Repository) async throws {
+        guard let patchContent = hunk.toPatchString(filePath: filePath, selectedLineIds: lineIds, forStaging: false) else {
+            throw GitError.unknown(message: "No valid lines to unstage")
+        }
         let command = UnstageHunkCommand()
         _ = try await executor.executeWithStdinOrThrow(
             arguments: command.arguments,
@@ -663,6 +699,91 @@ actor GitService {
         )
     }
 
+    /// Previews a merge without actually performing it.
+    /// - Parameters:
+    ///   - sourceBranch: The branch to merge from.
+    ///   - targetBranch: The branch to merge into (current branch).
+    ///   - repository: The repository.
+    /// - Returns: A preview of what the merge would do.
+    func previewMerge(sourceBranch: String, targetBranch: String, in repository: Repository) async throws -> MergePreviewResult {
+        // Get merge base
+        let mergeBaseCommand = MergeBaseCommand(branch1: targetBranch, branch2: sourceBranch)
+        let mergeBase = try? await executor.executeOrThrow(
+            arguments: mergeBaseCommand.arguments,
+            workingDirectory: repository.rootURL
+        ).trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // Get commits that would be merged
+        let logCommand = LogCommand(limit: 100, ref: "\(targetBranch)..\(sourceBranch)")
+        let logOutput = try await executor.executeOrThrow(
+            arguments: logCommand.arguments,
+            workingDirectory: repository.rootURL
+        )
+        let commits = (try? logCommand.parse(output: logOutput)) ?? []
+
+        // Get file changes
+        var fileChanges: [MergePreviewChange] = []
+        if let base = mergeBase {
+            let diffCommand = DiffTreeSummaryCommand(base: base, target: sourceBranch)
+            let diffOutput = try await executor.executeOrThrow(
+                arguments: diffCommand.arguments,
+                workingDirectory: repository.rootURL
+            )
+            fileChanges = (try? diffCommand.parse(output: diffOutput)) ?? []
+        }
+
+        // Try a dry-run merge to detect conflicts
+        var hasConflicts = false
+        var conflictedFiles: [ConflictedFile] = []
+
+        do {
+            // Attempt merge without commit
+            let previewCommand = MergePreviewCommand(branchName: sourceBranch)
+            _ = try await executor.executeOrThrow(
+                arguments: previewCommand.arguments,
+                workingDirectory: repository.rootURL
+            )
+
+            // Check for conflicts
+            let unmergedCommand = GetUnmergedStatusCommand()
+            let unmergedOutput = try await executor.executeOrThrow(
+                arguments: unmergedCommand.arguments,
+                workingDirectory: repository.rootURL
+            )
+            conflictedFiles = (try? unmergedCommand.parse(output: unmergedOutput)) ?? []
+            hasConflicts = !conflictedFiles.isEmpty
+
+            // Abort the preview merge
+            try? await abortMerge(in: repository)
+        } catch {
+            // Merge failed - likely has conflicts
+            hasConflicts = true
+
+            // Try to get conflict info
+            let unmergedCommand = GetUnmergedStatusCommand()
+            if let unmergedOutput = try? await executor.executeOrThrow(
+                arguments: unmergedCommand.arguments,
+                workingDirectory: repository.rootURL
+            ) {
+                conflictedFiles = (try? unmergedCommand.parse(output: unmergedOutput)) ?? []
+            }
+
+            // Abort the preview merge
+            try? await abortMerge(in: repository)
+        }
+
+        return MergePreviewResult(
+            sourceBranch: sourceBranch,
+            targetBranch: targetBranch,
+            mergeBase: mergeBase,
+            commitCount: commits.count,
+            commits: commits,
+            fileChanges: fileChanges,
+            hasConflicts: hasConflicts,
+            conflictedFiles: conflictedFiles
+        )
+    }
+
     // MARK: - Rebase Operations
 
     /// Rebases the current branch onto another branch.
@@ -758,7 +879,7 @@ actor GitService {
             throw GitError.commandFailed(
                 command: "git rebase -i \(branch)",
                 exitCode: result.exitCode,
-                stderr: result.stderr
+                message: result.stderr
             )
         }
     }
@@ -905,8 +1026,13 @@ actor GitService {
     }
 
     /// Creates a new stash.
-    func createStash(message: String? = nil, includeUntracked: Bool = false, in repository: Repository) async throws {
-        let command = CreateStashCommand(message: message, includeUntracked: includeUntracked)
+    /// - Parameters:
+    ///   - message: Optional stash message.
+    ///   - includeUntracked: Whether to include untracked files.
+    ///   - includeIgnored: Whether to include ignored files (implies includeUntracked).
+    ///   - repository: The repository.
+    func createStash(message: String? = nil, includeUntracked: Bool = false, includeIgnored: Bool = false, in repository: Repository) async throws {
+        let command = CreateStashCommand(message: message, includeUntracked: includeUntracked, includeIgnored: includeIgnored)
         _ = try await executor.executeOrThrow(
             arguments: command.arguments,
             workingDirectory: repository.rootURL
@@ -957,6 +1083,35 @@ actor GitService {
             workingDirectory: repository.rootURL
         )
         return try command.parse(output: output)
+    }
+
+    /// Renames a stash by storing it with a new message.
+    /// This uses `git stash store` to create a new stash entry with the same commit but new message.
+    /// - Parameters:
+    ///   - stashRef: The stash reference to rename.
+    ///   - newMessage: The new message for the stash.
+    ///   - repository: The repository.
+    func renameStash(_ stashRef: String, to newMessage: String, in repository: Repository) async throws {
+        // Get the commit hash of the stash
+        let revParseArgs = ["rev-parse", stashRef]
+        let stashCommit = try await executor.executeOrThrow(
+            arguments: revParseArgs,
+            workingDirectory: repository.rootURL
+        ).trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // Drop the old stash
+        let dropCommand = DropStashCommand(stashRef: stashRef)
+        _ = try await executor.executeOrThrow(
+            arguments: dropCommand.arguments,
+            workingDirectory: repository.rootURL
+        )
+
+        // Store the stash with the new message
+        let storeArgs = ["stash", "store", "-m", newMessage, stashCommit]
+        _ = try await executor.executeOrThrow(
+            arguments: storeArgs,
+            workingDirectory: repository.rootURL
+        )
     }
 
     // MARK: - Remote Operations

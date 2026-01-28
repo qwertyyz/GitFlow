@@ -187,7 +187,7 @@ final class FileTreeViewModel: ObservableObject {
     /// Opens a file in a specific application.
     func openFile(_ node: FileTreeNode, with appURL: URL) {
         guard !node.isDirectory else { return }
-        NSWorkspace.shared.open([node.url], withApplicationAt: appURL, configuration: .init())
+        NSWorkspace.shared.open([node.url], withApplicationAt: appURL, configuration: NSWorkspace.OpenConfiguration())
     }
 
     /// Opens a file in the user's preferred editor.
@@ -208,7 +208,7 @@ final class FileTreeViewModel: ObservableObject {
             let url = URL(fileURLWithPath: editor)
             if FileManager.default.fileExists(atPath: editor) {
                 if editor.hasSuffix(".app") {
-                    NSWorkspace.shared.open([node.url], withApplicationAt: url, configuration: .init())
+                    NSWorkspace.shared.open([node.url], withApplicationAt: url, configuration: NSWorkspace.OpenConfiguration())
                 } else {
                     // CLI tool
                     let process = Process()
@@ -285,6 +285,60 @@ final class FileTreeViewModel: ObservableObject {
         }
     }
 
+    /// Moves a file or folder to a new directory.
+    /// - Parameters:
+    ///   - node: The node to move.
+    ///   - destination: The destination directory node.
+    /// - Returns: Result of the operation.
+    func move(_ node: FileTreeNode, to destination: FileTreeNode) async -> FileOperationResult {
+        guard destination.isDirectory else { return .failure(FileTreeError.notADirectory) }
+
+        let newURL = destination.url.appendingPathComponent(node.name)
+
+        // Check if destination already has a file with the same name
+        if FileManager.default.fileExists(atPath: newURL.path) {
+            return .failure(FileTreeError.fileExists)
+        }
+
+        do {
+            try FileManager.default.moveItem(at: node.url, to: newURL)
+            await refresh()
+            return .success
+        } catch {
+            return .failure(error)
+        }
+    }
+
+    /// Copies a file or folder to a new directory.
+    /// - Parameters:
+    ///   - node: The node to copy.
+    ///   - destination: The destination directory node.
+    /// - Returns: Result of the operation.
+    func copy(_ node: FileTreeNode, to destination: FileTreeNode) async -> FileOperationResult {
+        guard destination.isDirectory else { return .failure(FileTreeError.notADirectory) }
+
+        var newURL = destination.url.appendingPathComponent(node.name)
+
+        // Handle name collision
+        var counter = 1
+        while FileManager.default.fileExists(atPath: newURL.path) {
+            let name = node.name
+            let ext = (name as NSString).pathExtension
+            let baseName = (name as NSString).deletingPathExtension
+            let newName = ext.isEmpty ? "\(baseName) (\(counter))" : "\(baseName) (\(counter)).\(ext)"
+            newURL = destination.url.appendingPathComponent(newName)
+            counter += 1
+        }
+
+        do {
+            try FileManager.default.copyItem(at: node.url, to: newURL)
+            await refresh()
+            return .success
+        } catch {
+            return .failure(error)
+        }
+    }
+
     // MARK: - Private Methods
 
     private func loadGitStatus() async {
@@ -293,22 +347,22 @@ final class FileTreeViewModel: ObservableObject {
             fileStatuses = [:]
 
             for file in status.stagedFiles {
-                fileStatuses[file.path] = mapStatusType(file.type)
+                fileStatuses[file.path] = mapStatusType(file.displayChangeType)
             }
 
             for file in status.unstagedFiles {
-                fileStatuses[file.path] = mapStatusType(file.type)
+                fileStatuses[file.path] = mapStatusType(file.displayChangeType)
             }
 
             for file in status.untrackedFiles {
-                fileStatuses[file] = .untracked
+                fileStatuses[file.path] = .untracked
             }
         } catch {
             // Continue without status
         }
     }
 
-    private func mapStatusType(_ type: FileStatusType) -> FileGitStatus {
+    private func mapStatusType(_ type: FileChangeType) -> FileGitStatus {
         switch type {
         case .added: return .added
         case .modified: return .modified
@@ -316,6 +370,9 @@ final class FileTreeViewModel: ObservableObject {
         case .renamed: return .renamed
         case .copied: return .copied
         case .untracked: return .untracked
+        case .unmerged: return .conflict
+        case .typeChanged: return .modified
+        case .ignored: return .ignored
         }
     }
 

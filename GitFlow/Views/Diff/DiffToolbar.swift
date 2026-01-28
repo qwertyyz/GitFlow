@@ -76,6 +76,48 @@ struct DiffToolbar: View {
                 .labelsHidden()
                 .frame(width: 120)
 
+                // Line staging actions (shown when lines are selected)
+                if viewModel.canStageHunks || viewModel.canUnstageHunks {
+                    if !viewModel.selectedLineIds.isEmpty {
+                        Text("\(viewModel.selectedLineIds.count) lines")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        if viewModel.canStageSelectedLines {
+                            Button {
+                                Task { await viewModel.stageSelectedLines() }
+                            } label: {
+                                Label("Stage Lines", systemImage: "plus.circle.fill")
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .tint(.green)
+                        }
+
+                        if viewModel.canUnstageSelectedLines {
+                            Button {
+                                Task { await viewModel.unstageSelectedLines() }
+                            } label: {
+                                Label("Unstage Lines", systemImage: "minus.circle.fill")
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .tint(.orange)
+                        }
+
+                        Button {
+                            viewModel.clearLineSelection()
+                        } label: {
+                            Image(systemName: "xmark.circle")
+                        }
+                        .buttonStyle(.borderless)
+                        .help("Clear selection")
+                    }
+
+                    Divider()
+                        .frame(height: 16)
+                }
+
                 // Blame toggle
                 Button {
                     viewModel.showBlame.toggle()
@@ -83,11 +125,12 @@ struct DiffToolbar: View {
                         Task { await viewModel.loadBlame() }
                     }
                 } label: {
-                    Image(systemName: viewModel.showBlame ? "person.fill" : "person")
+                    Label("Blame", systemImage: viewModel.showBlame ? "person.fill" : "person")
+                        .labelStyle(.titleAndIcon)
                 }
                 .buttonStyle(.borderless)
                 .foregroundStyle(viewModel.showBlame ? .blue : .secondary)
-                .help("Toggle blame annotations")
+                .help("Show who last modified each line")
 
                 // Search button
                 Button {

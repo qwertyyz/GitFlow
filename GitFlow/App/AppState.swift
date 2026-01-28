@@ -22,6 +22,32 @@ final class AppState: ObservableObject {
     /// Current error to display, if any.
     @Published var currentError: GitError?
 
+    // MARK: - UI State for Menu Commands
+
+    /// Whether to show the command palette.
+    @Published var showCommandPalette: Bool = false
+
+    /// Whether to focus the commit message input.
+    @Published var focusCommitMessage: Bool = false
+
+    /// Whether to show the create stash sheet.
+    @Published var showCreateStash: Bool = false
+
+    /// Whether to show the new branch sheet.
+    @Published var showNewBranch: Bool = false
+
+    /// Whether to show the switch branch sheet.
+    @Published var showSwitchBranch: Bool = false
+
+    /// Whether to show the merge branch sheet.
+    @Published var showMergeBranch: Bool = false
+
+    /// Whether to show the rebase branch sheet.
+    @Published var showRebaseBranch: Bool = false
+
+    /// Whether to show the diff search.
+    @Published var showDiffSearch: Bool = false
+
     // MARK: - Services
 
     private let recentRepositoriesStore = RecentRepositoriesStore()

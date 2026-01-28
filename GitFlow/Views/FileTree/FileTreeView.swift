@@ -11,6 +11,7 @@ struct FileTreeView: View {
     @State private var targetDirectory: FileTreeNode?
     @State private var nodeToRename: FileTreeNode?
     @State private var nodeToDelete: FileTreeNode?
+    @State private var draggedNode: FileTreeNode?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -32,7 +33,7 @@ struct FileTreeView: View {
             // Search bar
             if !viewModel.searchText.isEmpty || viewModel.rootNode != nil {
                 FileTreeSearchBar(searchText: $viewModel.searchText)
-                    .onChange(of: viewModel.searchText) {
+                    .onChange(of: viewModel.searchText) { _ in
                         viewModel.search(viewModel.searchText)
                     }
             }
@@ -309,6 +310,8 @@ private struct FileTreeNodeView: View {
     let onRename: (FileTreeNode) -> Void
     let onDelete: (FileTreeNode) -> Void
 
+    @State private var isDropTargeted: Bool = false
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Node row
@@ -354,7 +357,11 @@ private struct FileTreeNodeView: View {
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
-            .background(viewModel.selectedFile?.id == node.id ? Color.accentColor.opacity(0.2) : Color.clear)
+            .background(
+                isDropTargeted && node.isDirectory
+                    ? Color.accentColor.opacity(0.3)
+                    : (viewModel.selectedFile?.id == node.id ? Color.accentColor.opacity(0.2) : Color.clear)
+            )
             .contentShape(Rectangle())
             .onTapGesture {
                 viewModel.selectedFile = node
@@ -378,6 +385,46 @@ private struct FileTreeNodeView: View {
                     onRename: onRename,
                     onDelete: onDelete
                 )
+            }
+            // Drag source
+            .draggable(node.url) {
+                HStack {
+                    FileIconView(node: node)
+                    Text(node.name)
+                        .font(.caption)
+                }
+                .padding(4)
+                .background(Color(NSColor.controlBackgroundColor))
+                .cornerRadius(4)
+            }
+            // Drop target (only for directories)
+            .dropDestination(for: URL.self) { urls, _ in
+                guard node.isDirectory else { return false }
+
+                Task {
+                    for url in urls {
+                        // Find the source node
+                        if let sourceNode = findNode(for: url) {
+                            // Don't allow dropping onto self or children
+                            if sourceNode.id != node.id && !isAncestor(sourceNode, of: node) {
+                                _ = await viewModel.move(sourceNode, to: node)
+                            }
+                        } else {
+                            // External file - copy it
+                            let tempNode = FileTreeNode(
+                                name: url.lastPathComponent,
+                                relativePath: url.lastPathComponent,
+                                url: url,
+                                isDirectory: false,
+                                depth: 0
+                            )
+                            _ = await viewModel.copy(tempNode, to: node)
+                        }
+                    }
+                }
+                return true
+            } isTargeted: { isTargeted in
+                isDropTargeted = isTargeted
             }
 
             // Children
@@ -406,6 +453,29 @@ private struct FileTreeNodeView: View {
         case .conflict: return .red
         default: return .primary
         }
+    }
+
+    /// Finds a node in the tree by URL.
+    private func findNode(for url: URL) -> FileTreeNode? {
+        guard let root = viewModel.rootNode else { return nil }
+        return findNodeRecursive(for: url, in: root)
+    }
+
+    private func findNodeRecursive(for url: URL, in node: FileTreeNode) -> FileTreeNode? {
+        if node.url == url {
+            return node
+        }
+        for child in node.children {
+            if let found = findNodeRecursive(for: url, in: child) {
+                return found
+            }
+        }
+        return nil
+    }
+
+    /// Checks if one node is an ancestor of another.
+    private func isAncestor(_ potential: FileTreeNode, of node: FileTreeNode) -> Bool {
+        node.relativePath.hasPrefix(potential.relativePath + "/")
     }
 }
 

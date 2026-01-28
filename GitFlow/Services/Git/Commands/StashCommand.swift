@@ -17,15 +17,20 @@ struct ListStashesCommand: GitCommand {
 struct CreateStashCommand: VoidGitCommand {
     let message: String?
     let includeUntracked: Bool
+    let includeIgnored: Bool
 
-    init(message: String? = nil, includeUntracked: Bool = false) {
+    init(message: String? = nil, includeUntracked: Bool = false, includeIgnored: Bool = false) {
         self.message = message
         self.includeUntracked = includeUntracked
+        self.includeIgnored = includeIgnored
     }
 
     var arguments: [String] {
         var args = ["stash", "push"]
-        if includeUntracked {
+        if includeIgnored {
+            // --all includes both untracked and ignored files
+            args.append("--all")
+        } else if includeUntracked {
             args.append("--include-untracked")
         }
         if let message {

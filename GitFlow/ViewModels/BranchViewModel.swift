@@ -43,8 +43,8 @@ final class BranchViewModel: ObservableObject {
 
     // MARK: - Dependencies
 
-    private let repository: Repository
-    private let gitService: GitService
+    let repository: Repository
+    let gitService: GitService
 
     // MARK: - Initialization
 

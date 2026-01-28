@@ -58,12 +58,12 @@ actor GitHubService {
             let remotes = try await gitService.getRemotes(in: repository)
             // Prefer origin
             if let origin = remotes.first(where: { $0.name == "origin" }),
-               let info = GitHubRemoteInfo.parse(from: origin.url) {
+               let info = GitHubRemoteInfo.parse(from: origin.fetchURL) {
                 return info
             }
             // Fall back to first GitHub remote
             for remote in remotes {
-                if let info = GitHubRemoteInfo.parse(from: remote.url) {
+                if let info = GitHubRemoteInfo.parse(from: remote.fetchURL) {
                     return info
                 }
             }

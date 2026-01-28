@@ -8,6 +8,9 @@ enum SidebarSection: String, CaseIterable, Identifiable {
     case stashes = "Stashes"
     case tags = "Tags"
     case sync = "Sync"
+    case fileTree = "Files"
+    case submodules = "Submodules"
+    case github = "GitHub"
 
     var id: String { rawValue }
 
@@ -19,6 +22,9 @@ enum SidebarSection: String, CaseIterable, Identifiable {
         case .stashes: return "tray.and.arrow.down"
         case .tags: return "tag"
         case .sync: return "arrow.triangle.2.circlepath"
+        case .fileTree: return "folder"
+        case .submodules: return "shippingbox"
+        case .github: return "link.circle"
         }
     }
 }
@@ -33,16 +39,19 @@ struct Sidebar: View {
             Section("Workspace") {
                 sidebarItem(for: .changes, badge: changesCountBadge)
                 sidebarItem(for: .stashes, badge: stashCountBadge)
+                sidebarItem(for: .fileTree, badge: nil)
             }
 
             Section("Repository") {
                 sidebarItem(for: .history, badge: nil)
                 sidebarItem(for: .branches, badge: branchCountBadge)
                 sidebarItem(for: .tags, badge: tagCountBadge)
+                sidebarItem(for: .submodules, badge: nil)
             }
 
             Section("Remote") {
                 sidebarItem(for: .sync, badge: nil)
+                sidebarItem(for: .github, badge: nil)
             }
         }
         .listStyle(.sidebar)

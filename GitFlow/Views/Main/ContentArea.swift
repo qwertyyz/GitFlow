@@ -29,7 +29,73 @@ struct ContentArea: View {
                 remoteViewModel: viewModel.remoteViewModel,
                 branchViewModel: viewModel.branchViewModel
             )
+        case .fileTree:
+            FileTreeSectionView(viewModel: viewModel)
+        case .submodules:
+            SubmoduleSectionView(viewModel: viewModel)
+        case .github:
+            GitHubSectionView(viewModel: viewModel)
         }
+    }
+}
+
+/// Wrapper view for file tree browser.
+struct FileTreeSectionView: View {
+    @ObservedObject var viewModel: RepositoryViewModel
+    @StateObject private var fileTreeViewModel: FileTreeViewModel
+
+    init(viewModel: RepositoryViewModel) {
+        self.viewModel = viewModel
+        self._fileTreeViewModel = StateObject(wrappedValue: FileTreeViewModel(
+            repository: viewModel.repository,
+            gitService: viewModel.gitService
+        ))
+    }
+
+    var body: some View {
+        FileTreeView(viewModel: fileTreeViewModel)
+            .task {
+                await fileTreeViewModel.loadTree()
+            }
+    }
+}
+
+/// Wrapper view for submodules.
+struct SubmoduleSectionView: View {
+    @ObservedObject var viewModel: RepositoryViewModel
+    @StateObject private var submoduleViewModel: SubmoduleViewModel
+
+    init(viewModel: RepositoryViewModel) {
+        self.viewModel = viewModel
+        self._submoduleViewModel = StateObject(wrappedValue: SubmoduleViewModel(
+            repository: viewModel.repository,
+            gitService: viewModel.gitService
+        ))
+    }
+
+    var body: some View {
+        SubmoduleListView(viewModel: submoduleViewModel)
+            .task {
+                await submoduleViewModel.refresh()
+            }
+    }
+}
+
+/// Wrapper view for GitHub integration.
+struct GitHubSectionView: View {
+    @ObservedObject var viewModel: RepositoryViewModel
+    @StateObject private var githubViewModel: GitHubViewModel
+
+    init(viewModel: RepositoryViewModel) {
+        self.viewModel = viewModel
+        self._githubViewModel = StateObject(wrappedValue: GitHubViewModel(
+            repository: viewModel.repository,
+            gitService: viewModel.gitService
+        ))
+    }
+
+    var body: some View {
+        GitHubView(viewModel: githubViewModel)
     }
 }
 
