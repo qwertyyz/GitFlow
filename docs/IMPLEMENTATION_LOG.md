@@ -74,11 +74,11 @@
 - [x] Quick actions menu
 - [x] Recent actions list
 
-### Phase 10: Configuration & Preferences
-- [ ] Git config editor
-- [ ] User name/email management
-- [ ] Default merge strategy
-- [ ] External editor configuration
+### Phase 10: Configuration & Preferences ✅
+- [x] Git config editor
+- [x] User name/email management
+- [x] Default merge strategy
+- [x] External editor configuration
 
 ### Phase 11: Repository Management Enhancements
 - [ ] Repository auto-discovery
@@ -480,4 +480,49 @@
 - `GlobalSearchResult` - Search result with type and action
 - `SearchResultType` - Type of search result (file, commit, branch, etc.)
 - `QuickAction` - Quick action for menus
+
+---
+
+### Phase 10: Configuration & Preferences (Completed)
+
+**Date**: 2026-01-27
+
+**Files Created**:
+- `GitFlow/Models/GitConfig.swift` - Git config models and app preferences
+- `GitFlow/Services/Git/Commands/ConfigCommand.swift` - Git config commands
+- `GitFlow/ViewModels/ConfigViewModel.swift` - Config management logic
+- `GitFlow/Views/Settings/ConfigView.swift` - Settings UI
+
+**Features Implemented**:
+- [x] View all git config entries with origin
+- [x] Filter by scope (system/global/local/worktree)
+- [x] Filter by section (user/core/commit/etc.)
+- [x] Search config entries
+- [x] Add new config entries
+- [x] Edit existing config values
+- [x] Delete config entries
+- [x] Quick user identity settings (name/email)
+- [x] Scope descriptions and badges
+- [x] Application preferences (theme, auto-fetch, etc.)
+- [x] External editor configuration
+- [x] Default clone directory setting
+- [x] Persistent app preferences
+
+**New Commands**:
+- `GetConfigCommand` - Get a config value
+- `SetConfigCommand` - Set a config value
+- `UnsetConfigCommand` - Unset a config value
+- `ListConfigCommand` - List all config with origin
+- `GetConfigSectionCommand` - Get config for a section
+- `AddConfigCommand` - Add to multi-value key
+- `UnsetAllConfigCommand` - Unset all values for key
+- `GetAllConfigCommand` - Get all values for multi-value key
+- `ConfigExistsCommand` - Check if config exists
+
+**New Models**:
+- `GitConfigEntry` - Config entry with key, value, scope
+- `ConfigScope` - Scope enum with flags
+- `ConfigSection` - Common config sections
+- `CommonConfigKey` - Common config keys with descriptions
+- `AppPreferences` - Application preferences
 
