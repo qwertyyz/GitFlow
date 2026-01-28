@@ -216,6 +216,99 @@ actor GitService {
         )
     }
 
+    // MARK: - Merge Conflict Operations
+
+    /// Checks if the repository is currently in a merge state.
+    func isMerging(in repository: Repository) async -> Bool {
+        let mergeHeadURL = repository.rootURL.appendingPathComponent(".git/MERGE_HEAD")
+        return FileManager.default.fileExists(atPath: mergeHeadURL.path)
+    }
+
+    /// Gets the list of conflicted files.
+    func getConflictedFiles(in repository: Repository) async throws -> [ConflictedFile] {
+        let command = GetUnmergedStatusCommand()
+        let output = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+        return try command.parse(output: output)
+    }
+
+    /// Gets the current merge state.
+    func getMergeState(in repository: Repository) async throws -> MergeState {
+        let currentBranch = try await getCurrentBranch(in: repository)
+        let conflictedFiles = try await getConflictedFiles(in: repository)
+
+        // Try to get the branch being merged
+        var mergingBranch: String?
+        let mergeCommand = GetMergingBranchCommand()
+        if let output = try? await executor.executeOrThrow(
+            arguments: mergeCommand.arguments,
+            workingDirectory: repository.rootURL
+        ) {
+            mergingBranch = try? mergeCommand.parse(output: output)
+        }
+
+        return MergeState(
+            mergingBranch: mergingBranch,
+            currentBranch: currentBranch,
+            conflictedFiles: conflictedFiles
+        )
+    }
+
+    /// Gets the content of a file at a specific merge stage.
+    /// - Parameters:
+    ///   - stage: 1 = base (common ancestor), 2 = ours, 3 = theirs
+    ///   - filePath: The file path.
+    ///   - repository: The repository.
+    /// - Returns: The file content at that stage.
+    func getMergeStageContent(stage: Int, filePath: String, in repository: Repository) async throws -> String {
+        let command = GetMergeStageContentCommand(stage: stage, filePath: filePath)
+        return try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Uses "ours" version to resolve a conflict.
+    func useOursVersion(for filePath: String, in repository: Repository) async throws {
+        let command = UseOursVersionCommand(filePath: filePath)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Uses "theirs" version to resolve a conflict.
+    func useTheirsVersion(for filePath: String, in repository: Repository) async throws {
+        let command = UseTheirsVersionCommand(filePath: filePath)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Marks a file as resolved by staging it.
+    func markConflictResolved(filePath: String, in repository: Repository) async throws {
+        let command = MarkConflictResolvedCommand(filePath: filePath)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Reads the current content of a file (with conflict markers).
+    func readFileContent(at filePath: String, in repository: Repository) async throws -> String {
+        let fileURL = repository.rootURL.appendingPathComponent(filePath)
+        return try String(contentsOf: fileURL, encoding: .utf8)
+    }
+
+    /// Writes resolved content to a file.
+    func writeFileContent(_ content: String, to filePath: String, in repository: Repository) async throws {
+        let fileURL = repository.rootURL.appendingPathComponent(filePath)
+        try content.write(to: fileURL, atomically: true, encoding: .utf8)
+    }
+
     // MARK: - Commit Operations
 
     /// Creates a new commit with the specified message.

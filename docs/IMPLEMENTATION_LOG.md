@@ -229,3 +229,49 @@
 - `BlameLine` - Single line of blame output
 - `BlameParser` - Parser for git blame output
 
+---
+
+### Phase 4: Merge & Conflict Resolution (Completed)
+
+**Date**: 2026-01-27
+
+**Files Created**:
+- `GitFlow/Models/MergeConflict.swift` - Models for conflict representation
+- `GitFlow/Services/Git/Commands/MergeCommand.swift` - Merge conflict commands
+- `GitFlow/ViewModels/MergeConflictViewModel.swift` - Conflict resolution logic
+- `GitFlow/Views/Merge/MergeConflictView.swift` - Three-way merge editor UI
+
+**Features Implemented**:
+- [x] Detect merge state
+- [x] List conflicted files with conflict type
+- [x] Parse conflict markers in files
+- [x] Get content from all three stages (ours, base, theirs)
+- [x] Use "ours" version to resolve
+- [x] Use "theirs" version to resolve
+- [x] Accept both versions
+- [x] Custom merge editing
+- [x] Mark conflicts as resolved
+- [x] Abort merge
+- [x] Continue merge
+- [x] Three-way merge editor with pane switching
+- [x] Conflict section quick resolution
+- [x] Progress tracking
+
+**New Commands**:
+- `GetUnmergedFilesCommand` - List unmerged files
+- `GetUnmergedStatusCommand` - Get detailed conflict status
+- `GetMergeStageContentCommand` - Get content at merge stage
+- `UseOursVersionCommand` - Checkout ours version
+- `UseTheirsVersionCommand` - Checkout theirs version
+- `MarkConflictResolvedCommand` - Stage resolved file
+- `GetMergingBranchCommand` - Get branch being merged
+- `IsMergingCommand` - Check merge state
+
+**New Models**:
+- `ConflictedFile` - File with merge conflict
+- `ConflictType` - Type of conflict
+- `ConflictSection` - Section of conflicting content
+- `ConflictResolution` - Resolution choice
+- `MergeState` - Overall merge state
+- `ConflictMarkerParser` - Parser for conflict markers
+
