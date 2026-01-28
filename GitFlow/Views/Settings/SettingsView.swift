@@ -38,7 +38,7 @@ struct SettingsView: View {
                     }
             }
         }
-        .frame(width: 450, height: showDismissButton ? 350 : 300)
+        .frame(width: 520, height: showDismissButton ? 470 : 420)
     }
 }
 
@@ -126,7 +126,6 @@ struct DiffSettingsView: View {
 
             Section {
                 HStack {
-                    Text("Font size")
                     Slider(value: $fontSize, in: 9...18, step: 1) {
                         Text("Font size")
                     }
@@ -164,7 +163,7 @@ struct GitSettingsView: View {
     var body: some View {
         Form {
             Section {
-                HStack {
+                HStack(alignment: .firstTextBaseline) {
                     TextField("Git executable path", text: $gitPath)
                         .textFieldStyle(.roundedBorder)
                         .fontDesign(.monospaced)
@@ -185,7 +184,7 @@ struct GitSettingsView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-
+            
                 Button("Detect Git") {
                     detectGit()
                 }

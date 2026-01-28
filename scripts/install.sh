@@ -14,7 +14,7 @@ MOUNT_POINT="/Volumes/GitFlow"
 INSTALL_PATH="/Applications"
 
 echo "╔════════════════════════════════════════╗"
-echo "║       GitFlow Installer v${VERSION}        ║"
+echo "║       GitFlow Installer v${VERSION}    ║"
 echo "╚════════════════════════════════════════╝"
 echo ""
 
