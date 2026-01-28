@@ -996,4 +996,99 @@ actor GitService {
 
         return name.isEmpty ? "repository" : name
     }
+
+    // MARK: - Submodule Operations
+
+    /// Gets all submodules in the repository.
+    func getSubmodules(in repository: Repository) async throws -> [Submodule] {
+        // Get status
+        let statusCommand = ListSubmodulesCommand()
+        let statusOutput = try await executor.executeOrThrow(
+            arguments: statusCommand.arguments,
+            workingDirectory: repository.rootURL
+        )
+        let submodules = try statusCommand.parse(output: statusOutput)
+
+        // Get config
+        let configCommand = GetSubmoduleConfigCommand()
+        if let configOutput = try? await executor.executeOrThrow(
+            arguments: configCommand.arguments,
+            workingDirectory: repository.rootURL
+        ) {
+            let configs = try configCommand.parse(output: configOutput)
+            return SubmoduleParser.merge(status: submodules, configs: configs)
+        }
+
+        return submodules
+    }
+
+    /// Initializes submodules.
+    func initSubmodules(recursive: Bool = true, in repository: Repository) async throws {
+        let command = InitSubmodulesCommand(recursive: recursive)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Updates submodules.
+    func updateSubmodules(
+        recursive: Bool = true,
+        init_: Bool = true,
+        remote: Bool = false,
+        paths: [String]? = nil,
+        in repository: Repository
+    ) async throws {
+        let command = UpdateSubmodulesCommand(recursive: recursive, init_: init_, remote: remote, paths: paths)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Adds a new submodule.
+    func addSubmodule(url: String, path: String, branch: String? = nil, in repository: Repository) async throws {
+        let command = AddSubmoduleCommand(url: url, path: path, branch: branch)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Deinitializes a submodule (removes from working tree).
+    func deinitSubmodule(path: String, force: Bool = false, in repository: Repository) async throws {
+        let command = DeinitSubmoduleCommand(path: path, force: force)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Syncs submodule URLs.
+    func syncSubmodules(recursive: Bool = true, in repository: Repository) async throws {
+        let command = SyncSubmodulesCommand(recursive: recursive)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Gets the diff for a submodule.
+    func getSubmoduleDiff(path: String, in repository: Repository) async throws -> String {
+        let command = SubmoduleDiffCommand(path: path)
+        let output = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+        return try command.parse(output: output)
+    }
+
+    /// Checks out a specific commit in a submodule.
+    func checkoutSubmoduleCommit(_ commit: String, path: String, in repository: Repository) async throws {
+        let command = CheckoutSubmoduleCommitCommand(submodulePath: path, commit: commit)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
 }

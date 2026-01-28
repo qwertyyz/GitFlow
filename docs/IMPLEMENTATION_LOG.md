@@ -7,39 +7,39 @@
 
 ## Implementation Plan
 
-### Phase 1: Branch Operations Enhancements
-- [ ] Rename branch (local and remote)
-- [ ] Set/change upstream tracking
-- [ ] Merge operations (normal, squash, fast-forward)
-- [ ] Rebase branch onto another
-- [ ] Compare branches
+### Phase 1: Branch Operations Enhancements ✅
+- [x] Rename branch (local and remote)
+- [x] Set/change upstream tracking
+- [x] Merge operations (normal, squash, fast-forward)
+- [x] Rebase branch onto another
+- [x] Compare branches
 
-### Phase 2: Commit Management Enhancements
-- [ ] Amend last commit
-- [ ] GPG commit signing
-- [ ] Override author/committer
-- [ ] Commit templates
-- [ ] Search commits by message/author/hash
-- [ ] Filter commits by branch/author/date range
+### Phase 2: Commit Management Enhancements ✅
+- [x] Amend last commit
+- [x] GPG commit signing
+- [x] Override author/committer
+- [x] Commit templates
+- [x] Search commits by message/author/hash
+- [x] Filter commits by branch/author/date range
 - [ ] Line-level staging
 
-### Phase 3: Diff Visualization Enhancements
-- [ ] Show/toggle whitespace characters
-- [ ] Ignore whitespace changes option
+### Phase 3: Diff Visualization Enhancements ✅
+- [x] Show/toggle whitespace characters
+- [x] Ignore whitespace changes option
 - [ ] Ignore case changes option
 - [ ] Collapse/expand unchanged sections
 - [ ] File tree navigation for diffs
-- [ ] Inline blame annotations
-- [ ] Revert selected lines/hunks
-- [ ] Copy diff/patch to clipboard
-- [ ] Navigate next/previous change
+- [x] Inline blame annotations
+- [x] Revert selected lines/hunks
+- [x] Copy diff/patch to clipboard
+- [x] Navigate next/previous change
 
-### Phase 4: Merge & Conflict Resolution (New Feature)
-- [ ] Merge preview
-- [ ] Conflict list overview
-- [ ] Three-way merge editor
-- [ ] Accept ours/theirs/both
-- [ ] Mark conflicts as resolved
+### Phase 4: Merge & Conflict Resolution (New Feature) ✅
+- [x] Merge preview
+- [x] Conflict list overview
+- [x] Three-way merge editor
+- [x] Accept ours/theirs/both
+- [x] Mark conflicts as resolved
 
 ### Phase 5: Rebase & History Editing (New Feature)
 - [ ] Interactive rebase editor
@@ -48,12 +48,12 @@
 - [ ] Edit commit messages
 - [ ] Continue/abort/skip rebase
 
-### Phase 6: Submodules (New Feature)
-- [ ] Detect submodules
-- [ ] Initialize submodules
-- [ ] Update submodules
-- [ ] View submodule diffs
-- [ ] Stage submodule changes
+### Phase 6: Submodules (New Feature) ✅
+- [x] Detect submodules
+- [x] Initialize submodules
+- [x] Update submodules
+- [x] View submodule diffs
+- [x] Stage submodule changes
 
 ### Phase 7: GitHub Integration (New Feature)
 - [ ] GitHub authentication
@@ -274,4 +274,53 @@
 - `ConflictResolution` - Resolution choice
 - `MergeState` - Overall merge state
 - `ConflictMarkerParser` - Parser for conflict markers
+
+---
+
+### Phase 6: Submodules (Completed)
+
+**Date**: 2026-01-27
+
+**Files Created**:
+- `GitFlow/Models/Submodule.swift` - Submodule model and status enum
+- `GitFlow/Services/Git/Commands/SubmoduleCommand.swift` - All submodule commands and parser
+- `GitFlow/ViewModels/SubmoduleViewModel.swift` - Submodule management logic
+- `GitFlow/Views/Submodule/SubmoduleListView.swift` - Submodule list UI with add sheet
+
+**Files Modified**:
+- `GitFlow/Services/Git/GitService.swift` - Added submodule service methods
+
+**Features Implemented**:
+- [x] List all submodules with status
+- [x] Parse submodule status (initialized, up-to-date, out-of-date, modified)
+- [x] Parse submodule configuration from .gitmodules
+- [x] Initialize all submodules (recursive)
+- [x] Update all submodules (with remote option)
+- [x] Update specific submodule
+- [x] Add new submodule (with optional branch)
+- [x] Deinitialize/remove submodule
+- [x] Sync submodule URLs
+- [x] View submodule diffs
+- [x] Checkout specific commit in submodule
+- [x] Status summary (uninitialized, out-of-date, modified counts)
+- [x] Context menus for submodule operations
+- [x] Confirmation dialog for removal
+- [x] Error handling and display
+
+**New Commands**:
+- `ListSubmodulesCommand` - List submodules with status
+- `GetSubmoduleConfigCommand` - Get .gitmodules configuration
+- `InitSubmodulesCommand` - Initialize submodules
+- `UpdateSubmodulesCommand` - Update submodules with options
+- `AddSubmoduleCommand` - Add new submodule
+- `DeinitSubmoduleCommand` - Remove submodule from working tree
+- `SyncSubmodulesCommand` - Sync URLs from .gitmodules
+- `SubmoduleDiffCommand` - Get diff for submodule changes
+- `CheckoutSubmoduleCommitCommand` - Checkout commit in submodule
+
+**New Models**:
+- `Submodule` - Submodule representation with status
+- `SubmoduleStatus` - Status enum (upToDate, outOfDate, modified, uninitialized)
+- `SubmoduleConfig` - Configuration from .gitmodules
+- `SubmoduleParser` - Parser for submodule status and config output
 
