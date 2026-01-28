@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Threshold for switching to virtualized rendering.
-private let largeFileLinesThreshold = 5000
+/// Threshold for switching to virtualized rendering (lowered for better performance).
+private let largeFileLinesThreshold = 1000
 
 /// A virtualized diff view for handling extremely large files.
 /// Uses a windowing technique to only render lines that are visible.

@@ -150,6 +150,26 @@ struct CommitHistoryView: View {
                                             viewModel.selectedCommit = commit
                                         }
                                         .id(commit.hash)
+                                        .onAppear {
+                                            // Load more when approaching the end
+                                            if commit.hash == viewModel.commits.last?.hash && viewModel.hasMore {
+                                                Task { await viewModel.loadMore() }
+                                            }
+                                        }
+                                }
+
+                                // Loading indicator at bottom
+                                if viewModel.hasMore {
+                                    HStack {
+                                        Spacer()
+                                        ProgressView()
+                                            .scaleEffect(0.7)
+                                        Text("Loading more...")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                        Spacer()
+                                    }
+                                    .frame(height: rowHeight)
                                 }
                             }
                         }
@@ -165,19 +185,37 @@ struct CommitHistoryView: View {
             }
         }
         .onChange(of: viewModel.commits) { newCommits in
-            // Rebuild graph when commits change
+            // Rebuild graph when commits change (async to not block UI)
             if showGraph {
-                graphNodes = graphBuilder.buildGraph(from: newCommits)
+                Task {
+                    let commits = newCommits
+                    let nodes = await Task.detached(priority: .userInitiated) {
+                        graphBuilder.buildGraph(from: commits)
+                    }.value
+                    graphNodes = nodes
+                }
             }
         }
         .onAppear {
             if showGraph && graphNodes.isEmpty {
-                graphNodes = graphBuilder.buildGraph(from: viewModel.commits)
+                Task {
+                    let commits = viewModel.commits
+                    let nodes = await Task.detached(priority: .userInitiated) {
+                        graphBuilder.buildGraph(from: commits)
+                    }.value
+                    graphNodes = nodes
+                }
             }
         }
         .onChange(of: showGraph) { newValue in
             if newValue && graphNodes.isEmpty {
-                graphNodes = graphBuilder.buildGraph(from: viewModel.commits)
+                Task {
+                    let commits = viewModel.commits
+                    let nodes = await Task.detached(priority: .userInitiated) {
+                        graphBuilder.buildGraph(from: commits)
+                    }.value
+                    graphNodes = nodes
+                }
             }
         }
         .onChange(of: searchText) { newValue in
