@@ -168,9 +168,169 @@ actor GitService {
         )
     }
 
+    /// Creates a commit with full options.
+    /// - Parameters:
+    ///   - options: The commit options.
+    ///   - repository: The repository.
+    func commitWithOptions(_ options: CommitOptions, in repository: Repository) async throws {
+        let command = CreateCommitWithOptionsCommand(options: options)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Amends the last commit with a new message.
+    /// - Parameters:
+    ///   - message: The new commit message.
+    ///   - repository: The repository.
+    func amendCommit(message: String, in repository: Repository) async throws {
+        var options = CommitOptions(message: message)
+        options.amend = true
+        try await commitWithOptions(options, in: repository)
+    }
+
+    /// Amends the last commit without changing the message.
+    /// - Parameter repository: The repository.
+    func amendCommitNoEdit(in repository: Repository) async throws {
+        var options = CommitOptions()
+        options.amend = true
+        options.noEdit = true
+        try await commitWithOptions(options, in: repository)
+    }
+
+    /// Gets the last commit message.
+    /// - Parameter repository: The repository.
+    /// - Returns: The last commit message.
+    func getLastCommitMessage(in repository: Repository) async throws -> String {
+        let command = GetLastCommitMessageCommand()
+        let output = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+        return try command.parse(output: output)
+    }
+
+    /// Checks if GPG signing is configured.
+    /// - Parameter repository: The repository.
+    /// - Returns: True if GPG signing is configured.
+    func isGPGSigningConfigured(in repository: Repository) async -> Bool {
+        let command = CheckGPGSigningCommand()
+        let result = try? await executor.execute(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+        guard let result = result, result.succeeded else { return false }
+        return (try? command.parse(output: result.stdout)) ?? false
+    }
+
+    /// Gets the configured GPG key ID.
+    /// - Parameter repository: The repository.
+    /// - Returns: The GPG key ID or nil.
+    func getGPGKeyId(in repository: Repository) async -> String? {
+        let command = GetGPGKeyIdCommand()
+        let result = try? await executor.execute(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+        guard let result = result, result.succeeded else { return nil }
+        return try? command.parse(output: result.stdout)
+    }
+
+    /// Gets the configured commit template.
+    /// - Parameter repository: The repository.
+    /// - Returns: The template content or nil.
+    func getCommitTemplate(in repository: Repository) async -> String? {
+        let command = GetCommitTemplateCommand()
+        let result = try? await executor.execute(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+        guard let result = result, result.succeeded else { return nil }
+        return try? command.parse(output: result.stdout)
+    }
+
     /// Gets the commit history.
     func getHistory(in repository: Repository, limit: Int = 100, ref: String? = nil) async throws -> [Commit] {
         let command = LogCommand(limit: limit, ref: ref)
+        let output = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+        return try command.parse(output: output)
+    }
+
+    /// Gets the commit history with filter options.
+    /// - Parameters:
+    ///   - repository: The repository.
+    ///   - limit: Maximum number of commits.
+    ///   - filters: Filter options.
+    /// - Returns: Array of commits matching the filters.
+    func getHistoryWithFilters(
+        in repository: Repository,
+        limit: Int = 100,
+        filters: LogFilterOptions
+    ) async throws -> [Commit] {
+        let command = LogWithFiltersCommand(limit: limit, filters: filters)
+        let output = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+        return try command.parse(output: output)
+    }
+
+    /// Searches commits by message.
+    /// - Parameters:
+    ///   - query: The search query.
+    ///   - limit: Maximum number of results.
+    ///   - repository: The repository.
+    /// - Returns: Array of matching commits.
+    func searchCommits(
+        query: String,
+        limit: Int = 100,
+        in repository: Repository
+    ) async throws -> [Commit] {
+        let command = SearchCommitsCommand(searchQuery: query, limit: limit)
+        let output = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+        return try command.parse(output: output)
+    }
+
+    /// Gets commits by a specific author.
+    /// - Parameters:
+    ///   - author: The author name or email.
+    ///   - limit: Maximum number of results.
+    ///   - repository: The repository.
+    /// - Returns: Array of commits by the author.
+    func getCommitsByAuthor(
+        author: String,
+        limit: Int = 100,
+        in repository: Repository
+    ) async throws -> [Commit] {
+        let command = AuthorCommitsCommand(author: author, limit: limit)
+        let output = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+        return try command.parse(output: output)
+    }
+
+    /// Gets commits in a date range.
+    /// - Parameters:
+    ///   - since: Start date (optional).
+    ///   - until: End date (optional).
+    ///   - limit: Maximum number of results.
+    ///   - repository: The repository.
+    /// - Returns: Array of commits in the date range.
+    func getCommitsInDateRange(
+        since: Date? = nil,
+        until: Date? = nil,
+        limit: Int = 100,
+        in repository: Repository
+    ) async throws -> [Commit] {
+        let command = DateRangeCommitsCommand(since: since, until: until, limit: limit)
         let output = try await executor.executeOrThrow(
             arguments: command.arguments,
             workingDirectory: repository.rootURL

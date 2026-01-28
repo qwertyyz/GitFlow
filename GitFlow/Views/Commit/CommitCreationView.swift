@@ -6,13 +6,24 @@ struct CommitCreationView: View {
     let canCommit: Bool
 
     @FocusState private var isMessageFocused: Bool
+    @State private var showAdvancedOptions: Bool = false
+    @State private var showAuthorSheet: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             // Header
             HStack {
-                Text("Commit")
+                Text(viewModel.modeIndicator)
                     .font(.headline)
+
+                if viewModel.isAmending {
+                    Button(action: { viewModel.cancelAmending() }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Cancel amending")
+                }
 
                 Spacer()
 
@@ -20,9 +31,73 @@ struct CommitCreationView: View {
                 Text(viewModel.subjectLengthIndicator)
                     .font(.caption)
                     .foregroundStyle(subjectLengthColor)
+
+                // Options button
+                Button(action: { showAdvancedOptions.toggle() }) {
+                    Image(systemName: "ellipsis.circle")
+                }
+                .buttonStyle(.plain)
+                .help("Commit options")
             }
             .padding(.horizontal)
             .padding(.top, 8)
+
+            // Advanced options (when expanded)
+            if showAdvancedOptions {
+                VStack(alignment: .leading, spacing: 8) {
+                    // GPG signing
+                    if viewModel.gpgSigningAvailable {
+                        Toggle(isOn: $viewModel.signWithGPG) {
+                            HStack {
+                                Image(systemName: "signature")
+                                Text("Sign with GPG")
+                                if let keyId = viewModel.gpgKeyId {
+                                    Text("(\(keyId.prefix(8))...)")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                        .toggleStyle(.checkbox)
+                    }
+
+                    // Author override
+                    HStack {
+                        if let author = viewModel.authorOverride {
+                            Label(author, systemImage: "person.fill")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+
+                            Button("Clear") {
+                                viewModel.clearAuthorOverride()
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(.blue)
+                            .font(.caption)
+                        } else {
+                            Button(action: { showAuthorSheet = true }) {
+                                Label("Override Author", systemImage: "person")
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    // Amend option
+                    if !viewModel.isAmending {
+                        Button(action: {
+                            Task { await viewModel.startAmending() }
+                        }) {
+                            Label("Amend Last Commit", systemImage: "arrow.uturn.backward")
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.secondary)
+                    }
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 4)
+                .background(Color(NSColor.controlBackgroundColor).opacity(0.5))
+            }
 
             // Message input
             TextEditor(text: $viewModel.commitMessage)
@@ -35,7 +110,7 @@ struct CommitCreationView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 4))
                 .overlay(alignment: .topLeading) {
                     if viewModel.commitMessage.isEmpty {
-                        Text("Enter commit message...")
+                        Text(viewModel.isAmending ? "Enter new commit message..." : "Enter commit message...")
                             .font(.system(.body, design: .monospaced))
                             .foregroundStyle(.tertiary)
                             .padding(.leading, 5)
@@ -64,14 +139,31 @@ struct CommitCreationView: View {
 
             // Actions
             HStack {
-                Button("Clear Message") {
+                Button("Clear") {
                     viewModel.clearMessage()
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
                 .disabled(viewModel.commitMessage.isEmpty)
 
+                if viewModel.commitTemplate != nil {
+                    Button("Template") {
+                        Task { await viewModel.loadTemplate() }
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.secondary)
+                }
+
                 Spacer()
+
+                // Amend without message change button
+                if viewModel.isAmending {
+                    Button("Amend (keep message)") {
+                        Task { await viewModel.amendNoEdit() }
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(viewModel.isCommitting)
+                }
 
                 Button(action: {
                     Task {
@@ -81,10 +173,10 @@ struct CommitCreationView: View {
                     if viewModel.isCommitting {
                         ProgressView()
                             .scaleEffect(0.6)
-                            .frame(width: 60)
+                            .frame(width: 80)
                     } else {
-                        Text("Commit")
-                            .frame(width: 60)
+                        Text(viewModel.isAmending ? "Amend" : "Commit")
+                            .frame(width: 80)
                     }
                 }
                 .buttonStyle(.borderedProminent)
@@ -105,6 +197,12 @@ struct CommitCreationView: View {
                 Text(error.localizedDescription)
             }
         }
+        .sheet(isPresented: $showAuthorSheet) {
+            AuthorOverrideSheet(viewModel: viewModel, isPresented: $showAuthorSheet)
+        }
+        .task {
+            await viewModel.loadInitialData()
+        }
     }
 
     private var subjectLengthColor: Color {
@@ -115,6 +213,87 @@ struct CommitCreationView: View {
         }
         return .secondary
     }
+}
+
+/// Sheet for overriding commit author.
+private struct AuthorOverrideSheet: View {
+    @ObservedObject var viewModel: CommitViewModel
+    @Binding var isPresented: Bool
+
+    @State private var name: String = ""
+    @State private var email: String = ""
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Text("Override Author")
+                    .font(.headline)
+                Spacer()
+                Button(action: { isPresented = false }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding()
+
+            Divider()
+
+            VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Name")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    TextField("Author Name", text: $name)
+                        .textFieldStyle(.roundedBorder)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Email")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    TextField("author@example.com", text: $email)
+                        .textFieldStyle(.roundedBorder)
+                }
+            }
+            .padding()
+
+            Divider()
+
+            HStack {
+                Spacer()
+
+                Button("Cancel") {
+                    isPresented = false
+                }
+                .keyboardShortcut(.cancelAction)
+
+                Button("Apply") {
+                    viewModel.setAuthor(name: name, email: email)
+                    isPresented = false
+                }
+                .keyboardShortcut(.defaultAction)
+                .buttonStyle(.borderedProminent)
+                .disabled(name.isEmpty || email.isEmpty)
+            }
+            .padding()
+        }
+        .frame(width: 300)
+    }
+}
+
+#Preview {
+    VStack {
+        Spacer()
+        CommitCreationView(
+            viewModel: CommitViewModel(
+                repository: Repository(rootURL: URL(fileURLWithPath: "/tmp")),
+                gitService: GitService()
+            ),
+            canCommit: true
+        )
+    }
+    .frame(width: 300, height: 300)
 }
 
 #Preview {

@@ -147,3 +147,46 @@
 - `MergeType` - Enum for merge types
 - `RepositoryState` - Current repository state (merge/rebase/detached)
 
+---
+
+### Phase 2: Commit Management Enhancements (Completed)
+
+**Date**: 2026-01-27
+
+**Files Modified**:
+- `GitFlow/Services/Git/Commands/CommitCommand.swift` - Added options for GPG, author override, amend
+- `GitFlow/Services/Git/Commands/LogCommand.swift` - Added search and filter commands
+- `GitFlow/Services/Git/GitService.swift` - Added commit and history service methods
+- `GitFlow/ViewModels/CommitViewModel.swift` - Added amend, GPG, author override support
+- `GitFlow/ViewModels/HistoryViewModel.swift` - Added search and filter functionality
+- `GitFlow/Views/Commit/CommitCreationView.swift` - Added advanced options UI
+- `GitFlow/Views/Commit/CommitHistoryView.swift` - Added search and filter UI
+
+**Features Implemented**:
+- [x] Amend last commit (with or without message change)
+- [x] GPG commit signing
+- [x] Author/committer override
+- [x] Get commit template from git config
+- [x] Search commits by message (grep)
+- [x] Filter commits by author
+- [x] Filter commits by date range
+- [x] Clear all filters
+- [x] Pagination with skip support
+- [x] Filter summary display
+- [x] Debounced search input
+
+**New Commands**:
+- `CreateCommitWithOptionsCommand` - Full commit options
+- `GetLastCommitMessageCommand` - Get previous commit message
+- `CheckGPGSigningCommand` - Check if GPG is configured
+- `GetGPGKeyIdCommand` - Get configured GPG key
+- `GetCommitTemplateCommand` - Get commit template
+- `LogWithFiltersCommand` - Full filter support
+- `SearchCommitsCommand` - Search by message
+- `AuthorCommitsCommand` - Filter by author
+- `DateRangeCommitsCommand` - Filter by date
+
+**New Models**:
+- `CommitOptions` - Full commit options struct
+- `LogFilterOptions` - History filter options struct
+

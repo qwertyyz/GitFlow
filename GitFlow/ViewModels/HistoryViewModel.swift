@@ -26,10 +26,29 @@ final class HistoryViewModel: ObservableObject {
     /// Optional branch/ref filter.
     @Published var refFilter: String?
 
+    /// Message search query.
+    @Published var messageSearch: String = ""
+
+    /// Author filter.
+    @Published var authorFilter: String = ""
+
+    /// Start date for date range filter.
+    @Published var sinceDate: Date?
+
+    /// End date for date range filter.
+    @Published var untilDate: Date?
+
+    /// Whether any filter is currently active.
+    @Published private(set) var hasActiveFilters: Bool = false
+
     // MARK: - Configuration
 
     /// Number of commits to load per page.
     let pageSize: Int = 50
+
+    // MARK: - Private State
+
+    private var currentSkip: Int = 0
 
     // MARK: - Dependencies
 
@@ -47,15 +66,14 @@ final class HistoryViewModel: ObservableObject {
 
     /// Refreshes the commit history.
     func refresh() async {
+        currentSkip = 0
         isLoading = true
         defer { isLoading = false }
 
+        updateHasActiveFilters()
+
         do {
-            commits = try await gitService.getHistory(
-                in: repository,
-                limit: pageSize,
-                ref: refFilter
-            )
+            commits = try await fetchCommits(skip: 0)
             hasMore = commits.count == pageSize
             error = nil
 
@@ -80,19 +98,15 @@ final class HistoryViewModel: ObservableObject {
         defer { isLoading = false }
 
         do {
-            let newCommits = try await gitService.getHistory(
-                in: repository,
-                limit: pageSize,
-                ref: refFilter
-            )
+            currentSkip += pageSize
+            let newCommits = try await fetchCommits(skip: currentSkip)
 
-            // Skip commits we already have
-            let existingHashes = Set(commits.map(\.hash))
-            let uniqueNewCommits = newCommits.filter { !existingHashes.contains($0.hash) }
-
-            if uniqueNewCommits.isEmpty {
+            if newCommits.isEmpty {
                 hasMore = false
             } else {
+                // Skip commits we already have
+                let existingHashes = Set(commits.map(\.hash))
+                let uniqueNewCommits = newCommits.filter { !existingHashes.contains($0.hash) }
                 commits.append(contentsOf: uniqueNewCommits)
                 hasMore = newCommits.count == pageSize
             }
@@ -128,6 +142,76 @@ final class HistoryViewModel: ObservableObject {
         await refresh()
     }
 
+    /// Searches commits by message.
+    func searchByMessage(_ query: String) async {
+        messageSearch = query
+        await refresh()
+    }
+
+    /// Filters commits by author.
+    func filterByAuthor(_ author: String) async {
+        authorFilter = author
+        await refresh()
+    }
+
+    /// Filters commits by date range.
+    func filterByDateRange(since: Date?, until: Date?) async {
+        sinceDate = since
+        untilDate = until
+        await refresh()
+    }
+
+    /// Clears all filters and refreshes.
+    func clearAllFilters() async {
+        messageSearch = ""
+        authorFilter = ""
+        sinceDate = nil
+        untilDate = nil
+        filePathFilter = nil
+        refFilter = nil
+        await refresh()
+    }
+
+    /// Applies the current filter settings (call after changing filter properties).
+    func applyFilters() async {
+        await refresh()
+    }
+
+    // MARK: - Private Methods
+
+    private func fetchCommits(skip: Int) async throws -> [Commit] {
+        // Build filter options
+        var filters = LogFilterOptions()
+        filters.skip = skip
+        filters.ref = refFilter
+        filters.filePath = filePathFilter
+
+        if !messageSearch.isEmpty {
+            filters.messageSearch = messageSearch
+        }
+
+        if !authorFilter.isEmpty {
+            filters.author = authorFilter
+        }
+
+        filters.since = sinceDate
+        filters.until = untilDate
+
+        return try await gitService.getHistoryWithFilters(
+            in: repository,
+            limit: pageSize,
+            filters: filters
+        )
+    }
+
+    private func updateHasActiveFilters() {
+        hasActiveFilters = !messageSearch.isEmpty ||
+            !authorFilter.isEmpty ||
+            sinceDate != nil ||
+            untilDate != nil ||
+            filePathFilter != nil
+    }
+
     // MARK: - Computed Properties
 
     /// Whether there are any commits.
@@ -138,5 +222,32 @@ final class HistoryViewModel: ObservableObject {
     /// The count of loaded commits.
     var commitCount: Int {
         commits.count
+    }
+
+    /// A summary of active filters for display.
+    var filterSummary: String? {
+        var parts: [String] = []
+
+        if !messageSearch.isEmpty {
+            parts.append("message: \"\(messageSearch)\"")
+        }
+
+        if !authorFilter.isEmpty {
+            parts.append("author: \(authorFilter)")
+        }
+
+        if let since = sinceDate {
+            parts.append("since: \(since.formatted(date: .abbreviated, time: .omitted))")
+        }
+
+        if let until = untilDate {
+            parts.append("until: \(until.formatted(date: .abbreviated, time: .omitted))")
+        }
+
+        if let path = filePathFilter {
+            parts.append("file: \(path)")
+        }
+
+        return parts.isEmpty ? nil : parts.joined(separator: ", ")
     }
 }

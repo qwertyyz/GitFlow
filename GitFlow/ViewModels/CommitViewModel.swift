@@ -17,6 +17,27 @@ final class CommitViewModel: ObservableObject {
     /// Whether the last commit succeeded.
     @Published private(set) var lastCommitSucceeded: Bool = false
 
+    /// Whether to amend the previous commit.
+    @Published var isAmending: Bool = false
+
+    /// Whether to sign the commit with GPG.
+    @Published var signWithGPG: Bool = false
+
+    /// Whether GPG signing is available.
+    @Published private(set) var gpgSigningAvailable: Bool = false
+
+    /// The GPG key ID if configured.
+    @Published private(set) var gpgKeyId: String?
+
+    /// Custom author override (format: "Name <email>").
+    @Published var authorOverride: String?
+
+    /// The last commit message (for amending).
+    @Published private(set) var lastCommitMessage: String = ""
+
+    /// The configured commit template.
+    @Published private(set) var commitTemplate: String?
+
     /// The subject line (first line) of the commit message.
     var subject: String {
         let lines = commitMessage.components(separatedBy: .newlines)
@@ -44,6 +65,18 @@ final class CommitViewModel: ObservableObject {
 
     // MARK: - Public Methods
 
+    /// Loads initial data (GPG status, template, etc.)
+    func loadInitialData() async {
+        gpgSigningAvailable = await gitService.isGPGSigningConfigured(in: repository)
+        gpgKeyId = await gitService.getGPGKeyId(in: repository)
+        commitTemplate = await gitService.getCommitTemplate(in: repository)
+
+        // Apply template if no message yet
+        if commitMessage.isEmpty, let template = commitTemplate {
+            commitMessage = template
+        }
+    }
+
     /// Creates a commit with the current message.
     func createCommit() async {
         await createCommit(message: commitMessage)
@@ -61,8 +94,53 @@ final class CommitViewModel: ObservableObject {
         defer { isCommitting = false }
 
         do {
-            try await gitService.commit(message: message, in: repository)
+            var options = CommitOptions(message: message)
+            options.amend = isAmending
+            options.gpgSign = signWithGPG
+            options.author = authorOverride
+
+            try await gitService.commitWithOptions(options, in: repository)
             commitMessage = ""
+            isAmending = false
+            authorOverride = nil
+            lastCommitSucceeded = true
+            error = nil
+        } catch let gitError as GitError {
+            error = gitError
+            lastCommitSucceeded = false
+        } catch {
+            self.error = .unknown(message: error.localizedDescription)
+            lastCommitSucceeded = false
+        }
+    }
+
+    /// Starts amending the last commit.
+    func startAmending() async {
+        isAmending = true
+
+        do {
+            lastCommitMessage = try await gitService.getLastCommitMessage(in: repository)
+            commitMessage = lastCommitMessage
+        } catch {
+            // Silently fail - user can still type a new message
+        }
+    }
+
+    /// Cancels amending and returns to normal commit mode.
+    func cancelAmending() {
+        isAmending = false
+        commitMessage = ""
+    }
+
+    /// Amends the last commit without changing the message.
+    func amendNoEdit() async {
+        isCommitting = true
+        lastCommitSucceeded = false
+        defer { isCommitting = false }
+
+        do {
+            try await gitService.amendCommitNoEdit(in: repository)
+            isAmending = false
             lastCommitSucceeded = true
             error = nil
         } catch let gitError as GitError {
@@ -82,6 +160,23 @@ final class CommitViewModel: ObservableObject {
     /// Sets a template commit message.
     func setTemplate(_ template: String) {
         commitMessage = template
+    }
+
+    /// Loads the configured commit template.
+    func loadTemplate() async {
+        if let template = await gitService.getCommitTemplate(in: repository) {
+            commitMessage = template
+        }
+    }
+
+    /// Sets a custom author for the commit.
+    func setAuthor(name: String, email: String) {
+        authorOverride = "\(name) <\(email)>"
+    }
+
+    /// Clears the author override.
+    func clearAuthorOverride() {
+        authorOverride = nil
     }
 
     // MARK: - Computed Properties
@@ -114,5 +209,13 @@ final class CommitViewModel: ObservableObject {
             return "\(subjectLength) (too long)"
         }
         return "\(subjectLength)"
+    }
+
+    /// The mode indicator text.
+    var modeIndicator: String {
+        if isAmending {
+            return "Amending"
+        }
+        return "New Commit"
     }
 }
