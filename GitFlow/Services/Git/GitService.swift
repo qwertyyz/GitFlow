@@ -249,6 +249,206 @@ actor GitService {
         )
     }
 
+    /// Renames a local branch.
+    /// - Parameters:
+    ///   - oldName: The current name of the branch.
+    ///   - newName: The new name for the branch.
+    ///   - repository: The repository.
+    func renameBranch(oldName: String, newName: String, in repository: Repository) async throws {
+        let command = RenameBranchCommand(oldName: oldName, newName: newName)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Renames a branch on the remote (deletes old, pushes new).
+    /// - Parameters:
+    ///   - oldName: The current name of the branch on remote.
+    ///   - newName: The new name for the branch.
+    ///   - remoteName: The remote name (defaults to "origin").
+    ///   - repository: The repository.
+    func renameBranchOnRemote(oldName: String, newName: String, remoteName: String = "origin", in repository: Repository) async throws {
+        // First rename locally
+        try await renameBranch(oldName: oldName, newName: newName, in: repository)
+
+        // Delete old branch on remote
+        let deleteCommand = DeleteRemoteBranchCommand(remoteName: remoteName, branchName: oldName)
+        _ = try await executor.executeOrThrow(
+            arguments: deleteCommand.arguments,
+            workingDirectory: repository.rootURL
+        )
+
+        // Push new branch to remote
+        let pushCommand = PushBranchToRemoteCommand(
+            localBranch: newName,
+            remoteName: remoteName,
+            remoteBranch: newName,
+            setUpstream: true
+        )
+        _ = try await executor.executeOrThrow(
+            arguments: pushCommand.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Sets the upstream tracking branch.
+    /// - Parameters:
+    ///   - branchName: The local branch name.
+    ///   - upstreamRef: The upstream reference (e.g., "origin/main").
+    ///   - repository: The repository.
+    func setUpstream(branchName: String, upstreamRef: String, in repository: Repository) async throws {
+        let command = SetUpstreamCommand(branchName: branchName, upstreamRef: upstreamRef)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Unsets the upstream tracking branch.
+    /// - Parameters:
+    ///   - branchName: The local branch name.
+    ///   - repository: The repository.
+    func unsetUpstream(branchName: String, in repository: Repository) async throws {
+        let command = UnsetUpstreamCommand(branchName: branchName)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    // MARK: - Merge Operations
+
+    /// Merges a branch into the current branch.
+    /// - Parameters:
+    ///   - branchName: The branch to merge.
+    ///   - mergeType: The type of merge to perform.
+    ///   - message: Optional commit message for the merge.
+    ///   - repository: The repository.
+    func merge(branchName: String, mergeType: MergeType = .normal, message: String? = nil, in repository: Repository) async throws {
+        let command = MergeCommand(branchName: branchName, mergeType: mergeType, message: message)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Aborts a merge in progress.
+    func abortMerge(in repository: Repository) async throws {
+        let command = AbortMergeCommand()
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Continues a merge after conflicts have been resolved.
+    func continueMerge(in repository: Repository) async throws {
+        let command = ContinueMergeCommand()
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    // MARK: - Rebase Operations
+
+    /// Rebases the current branch onto another branch.
+    /// - Parameters:
+    ///   - ontoBranch: The branch to rebase onto.
+    ///   - repository: The repository.
+    func rebase(ontoBranch: String, in repository: Repository) async throws {
+        let command = RebaseCommand(ontoBranch: ontoBranch, interactive: false)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Aborts a rebase in progress.
+    func abortRebase(in repository: Repository) async throws {
+        let command = AbortRebaseCommand()
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Continues a rebase after conflicts have been resolved.
+    func continueRebase(in repository: Repository) async throws {
+        let command = ContinueRebaseCommand()
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Skips the current commit during a rebase.
+    func skipRebase(in repository: Repository) async throws {
+        let command = SkipRebaseCommand()
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    // MARK: - Branch Comparison Operations
+
+    /// Gets the diff between two branches.
+    /// - Parameters:
+    ///   - baseBranch: The base branch for comparison.
+    ///   - compareBranch: The branch to compare against.
+    ///   - repository: The repository.
+    /// - Returns: Array of file diffs between the branches.
+    func getBranchDiff(baseBranch: String, compareBranch: String, in repository: Repository) async throws -> [FileDiff] {
+        let command = BranchDiffCommand(baseBranch: baseBranch, compareBranch: compareBranch)
+        let output = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+        return try command.parse(output: output)
+    }
+
+    /// Gets the commits that exist in compareBranch but not in baseBranch.
+    /// - Parameters:
+    ///   - baseBranch: The base branch for comparison.
+    ///   - compareBranch: The branch to compare against.
+    ///   - limit: Maximum number of commits to return.
+    ///   - repository: The repository.
+    /// - Returns: Array of commits unique to compareBranch.
+    func getBranchCommitDiff(baseBranch: String, compareBranch: String, limit: Int = 100, in repository: Repository) async throws -> [Commit] {
+        let command = BranchLogDiffCommand(baseBranch: baseBranch, compareBranch: compareBranch, limit: limit)
+        let output = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+        return try command.parse(output: output)
+    }
+
+    /// Checks if the repository is in a merging or rebasing state.
+    func getRepositoryState(in repository: Repository) async throws -> RepositoryState {
+        var state = RepositoryState()
+
+        // Check for current branch
+        if let currentBranch = try await getCurrentBranch(in: repository) {
+            state.currentBranch = currentBranch
+        } else {
+            state.isDetachedHead = true
+        }
+
+        // Check for merge state by looking for MERGE_HEAD file
+        let mergeHeadURL = repository.rootURL.appendingPathComponent(".git/MERGE_HEAD")
+        state.isMerging = FileManager.default.fileExists(atPath: mergeHeadURL.path)
+
+        // Check for rebase state by looking for rebase directory
+        let rebaseApplyURL = repository.rootURL.appendingPathComponent(".git/rebase-apply")
+        let rebaseMergeURL = repository.rootURL.appendingPathComponent(".git/rebase-merge")
+        state.isRebasing = FileManager.default.fileExists(atPath: rebaseApplyURL.path)
+            || FileManager.default.fileExists(atPath: rebaseMergeURL.path)
+
+        return state
+    }
+
     // MARK: - Stash Operations
 
     /// Gets all stashes.

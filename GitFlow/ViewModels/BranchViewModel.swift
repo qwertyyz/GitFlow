@@ -32,6 +32,15 @@ final class BranchViewModel: ObservableObject {
     /// Whether to show remote branches.
     @Published var showRemoteBranches: Bool = true
 
+    /// Current repository state (merge/rebase in progress).
+    @Published private(set) var repositoryState: RepositoryState = RepositoryState()
+
+    /// Commits unique to the compare branch (for branch comparison).
+    @Published private(set) var comparisonCommits: [Commit] = []
+
+    /// File diffs between compared branches.
+    @Published private(set) var comparisonDiffs: [FileDiff] = []
+
     // MARK: - Dependencies
 
     private let repository: Repository
@@ -120,6 +129,256 @@ final class BranchViewModel: ObservableObject {
     /// Selects a branch for viewing.
     func selectBranch(_ branch: Branch) {
         selectedBranch = branch
+    }
+
+    // MARK: - Branch Rename Operations
+
+    /// Renames a local branch.
+    func renameBranch(oldName: String, newName: String) async {
+        isOperationInProgress = true
+        defer { isOperationInProgress = false }
+
+        do {
+            try await gitService.renameBranch(oldName: oldName, newName: newName, in: repository)
+            await refresh()
+            error = nil
+        } catch let gitError as GitError {
+            error = gitError
+        } catch {
+            self.error = .unknown(message: error.localizedDescription)
+        }
+    }
+
+    /// Renames a branch on both local and remote.
+    func renameBranchOnRemote(oldName: String, newName: String, remoteName: String = "origin") async {
+        isOperationInProgress = true
+        defer { isOperationInProgress = false }
+
+        do {
+            try await gitService.renameBranchOnRemote(
+                oldName: oldName,
+                newName: newName,
+                remoteName: remoteName,
+                in: repository
+            )
+            await refresh()
+            error = nil
+        } catch let gitError as GitError {
+            error = gitError
+        } catch {
+            self.error = .unknown(message: error.localizedDescription)
+        }
+    }
+
+    // MARK: - Upstream Operations
+
+    /// Sets the upstream tracking branch.
+    func setUpstream(branchName: String, upstreamRef: String) async {
+        isOperationInProgress = true
+        defer { isOperationInProgress = false }
+
+        do {
+            try await gitService.setUpstream(branchName: branchName, upstreamRef: upstreamRef, in: repository)
+            await refresh()
+            error = nil
+        } catch let gitError as GitError {
+            error = gitError
+        } catch {
+            self.error = .unknown(message: error.localizedDescription)
+        }
+    }
+
+    /// Unsets the upstream tracking branch.
+    func unsetUpstream(branchName: String) async {
+        isOperationInProgress = true
+        defer { isOperationInProgress = false }
+
+        do {
+            try await gitService.unsetUpstream(branchName: branchName, in: repository)
+            await refresh()
+            error = nil
+        } catch let gitError as GitError {
+            error = gitError
+        } catch {
+            self.error = .unknown(message: error.localizedDescription)
+        }
+    }
+
+    // MARK: - Merge Operations
+
+    /// Merges a branch into the current branch.
+    func merge(branchName: String, mergeType: MergeType = .normal, message: String? = nil) async {
+        isOperationInProgress = true
+        defer { isOperationInProgress = false }
+
+        do {
+            try await gitService.merge(branchName: branchName, mergeType: mergeType, message: message, in: repository)
+            await refresh()
+            await refreshRepositoryState()
+            error = nil
+        } catch let gitError as GitError {
+            error = gitError
+            await refreshRepositoryState()
+        } catch {
+            self.error = .unknown(message: error.localizedDescription)
+            await refreshRepositoryState()
+        }
+    }
+
+    /// Aborts a merge in progress.
+    func abortMerge() async {
+        isOperationInProgress = true
+        defer { isOperationInProgress = false }
+
+        do {
+            try await gitService.abortMerge(in: repository)
+            await refresh()
+            await refreshRepositoryState()
+            error = nil
+        } catch let gitError as GitError {
+            error = gitError
+        } catch {
+            self.error = .unknown(message: error.localizedDescription)
+        }
+    }
+
+    /// Continues a merge after conflicts have been resolved.
+    func continueMerge() async {
+        isOperationInProgress = true
+        defer { isOperationInProgress = false }
+
+        do {
+            try await gitService.continueMerge(in: repository)
+            await refresh()
+            await refreshRepositoryState()
+            error = nil
+        } catch let gitError as GitError {
+            error = gitError
+        } catch {
+            self.error = .unknown(message: error.localizedDescription)
+        }
+    }
+
+    // MARK: - Rebase Operations
+
+    /// Rebases the current branch onto another branch.
+    func rebase(ontoBranch: String) async {
+        isOperationInProgress = true
+        defer { isOperationInProgress = false }
+
+        do {
+            try await gitService.rebase(ontoBranch: ontoBranch, in: repository)
+            await refresh()
+            await refreshRepositoryState()
+            error = nil
+        } catch let gitError as GitError {
+            error = gitError
+            await refreshRepositoryState()
+        } catch {
+            self.error = .unknown(message: error.localizedDescription)
+            await refreshRepositoryState()
+        }
+    }
+
+    /// Aborts a rebase in progress.
+    func abortRebase() async {
+        isOperationInProgress = true
+        defer { isOperationInProgress = false }
+
+        do {
+            try await gitService.abortRebase(in: repository)
+            await refresh()
+            await refreshRepositoryState()
+            error = nil
+        } catch let gitError as GitError {
+            error = gitError
+        } catch {
+            self.error = .unknown(message: error.localizedDescription)
+        }
+    }
+
+    /// Continues a rebase after conflicts have been resolved.
+    func continueRebase() async {
+        isOperationInProgress = true
+        defer { isOperationInProgress = false }
+
+        do {
+            try await gitService.continueRebase(in: repository)
+            await refresh()
+            await refreshRepositoryState()
+            error = nil
+        } catch let gitError as GitError {
+            error = gitError
+        } catch {
+            self.error = .unknown(message: error.localizedDescription)
+        }
+    }
+
+    /// Skips the current commit during rebase.
+    func skipRebase() async {
+        isOperationInProgress = true
+        defer { isOperationInProgress = false }
+
+        do {
+            try await gitService.skipRebase(in: repository)
+            await refresh()
+            await refreshRepositoryState()
+            error = nil
+        } catch let gitError as GitError {
+            error = gitError
+        } catch {
+            self.error = .unknown(message: error.localizedDescription)
+        }
+    }
+
+    // MARK: - Branch Comparison
+
+    /// Compares two branches and loads the commit and file diffs.
+    func compareBranches(base: String, compare: String) async {
+        isLoading = true
+        defer { isLoading = false }
+
+        do {
+            async let commits = gitService.getBranchCommitDiff(
+                baseBranch: base,
+                compareBranch: compare,
+                in: repository
+            )
+            async let diffs = gitService.getBranchDiff(
+                baseBranch: base,
+                compareBranch: compare,
+                in: repository
+            )
+
+            comparisonCommits = try await commits
+            comparisonDiffs = try await diffs
+            error = nil
+        } catch let gitError as GitError {
+            error = gitError
+            comparisonCommits = []
+            comparisonDiffs = []
+        } catch {
+            self.error = .unknown(message: error.localizedDescription)
+            comparisonCommits = []
+            comparisonDiffs = []
+        }
+    }
+
+    /// Clears the branch comparison results.
+    func clearComparison() {
+        comparisonCommits = []
+        comparisonDiffs = []
+    }
+
+    // MARK: - Repository State
+
+    /// Refreshes the repository state (merge/rebase status).
+    func refreshRepositoryState() async {
+        do {
+            repositoryState = try await gitService.getRepositoryState(in: repository)
+        } catch {
+            // Silently fail, keep previous state
+        }
     }
 
     // MARK: - Computed Properties

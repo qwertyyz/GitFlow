@@ -6,6 +6,11 @@ struct BranchListView: View {
 
     @State private var showCreateBranch: Bool = false
     @State private var branchToDelete: Branch?
+    @State private var branchToRename: Branch?
+    @State private var branchToMerge: Branch?
+    @State private var branchToRebase: Branch?
+    @State private var branchToCompare: Branch?
+    @State private var branchToSetUpstream: Branch?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -15,6 +20,25 @@ struct BranchListView: View {
                     .font(.headline)
 
                 Spacer()
+
+                // Show merge/rebase in progress indicator
+                if viewModel.repositoryState.isMerging {
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.triangle.merge")
+                            .foregroundStyle(.orange)
+                        Text("Merging")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                    }
+                } else if viewModel.repositoryState.isRebasing {
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.triangle.swap")
+                            .foregroundStyle(.orange)
+                        Text("Rebasing")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                    }
+                }
 
                 Toggle("Remote", isOn: $viewModel.showRemoteBranches)
                     .toggleStyle(.checkbox)
@@ -26,7 +50,7 @@ struct BranchListView: View {
                 .buttonStyle(.borderless)
                 .help("Create new branch")
 
-                if viewModel.isLoading {
+                if viewModel.isLoading || viewModel.isOperationInProgress {
                     ProgressView()
                         .scaleEffect(0.6)
                 }
@@ -35,6 +59,11 @@ struct BranchListView: View {
             .padding(.vertical, 8)
 
             Divider()
+
+            // Merge/Rebase in progress actions
+            if viewModel.repositoryState.isMerging || viewModel.repositoryState.isRebasing {
+                MergeRebaseActionsView(viewModel: viewModel)
+            }
 
             // Branch list
             if viewModel.displayBranches.isEmpty && !viewModel.isLoading {
@@ -51,15 +80,7 @@ struct BranchListView: View {
                             BranchRow(branch: branch)
                                 .tag(branch)
                                 .contextMenu {
-                                    if !branch.isCurrent {
-                                        Button("Checkout") {
-                                            Task { await viewModel.checkout(branch: branch) }
-                                        }
-                                        Divider()
-                                        Button("Delete", role: .destructive) {
-                                            branchToDelete = branch
-                                        }
-                                    }
+                                    localBranchContextMenu(for: branch)
                                 }
                         }
                     }
@@ -71,9 +92,7 @@ struct BranchListView: View {
                                 BranchRow(branch: branch)
                                     .tag(branch)
                                     .contextMenu {
-                                        Button("Checkout") {
-                                            Task { await viewModel.checkout(branchName: branch.name) }
-                                        }
+                                        remoteBranchContextMenu(for: branch)
                                     }
                             }
                         }
@@ -84,6 +103,36 @@ struct BranchListView: View {
         }
         .sheet(isPresented: $showCreateBranch) {
             BranchCreationSheet(viewModel: viewModel, isPresented: $showCreateBranch)
+        }
+        .sheet(item: $branchToRename) { branch in
+            BranchRenameSheet(viewModel: viewModel, branch: branch, isPresented: .init(
+                get: { branchToRename != nil },
+                set: { if !$0 { branchToRename = nil } }
+            ))
+        }
+        .sheet(item: $branchToMerge) { branch in
+            MergeBranchSheet(viewModel: viewModel, sourceBranch: branch, isPresented: .init(
+                get: { branchToMerge != nil },
+                set: { if !$0 { branchToMerge = nil } }
+            ))
+        }
+        .sheet(item: $branchToRebase) { branch in
+            RebaseBranchSheet(viewModel: viewModel, ontoBranch: branch, isPresented: .init(
+                get: { branchToRebase != nil },
+                set: { if !$0 { branchToRebase = nil } }
+            ))
+        }
+        .sheet(item: $branchToCompare) { branch in
+            BranchCompareSheet(viewModel: viewModel, compareBranch: branch, isPresented: .init(
+                get: { branchToCompare != nil },
+                set: { if !$0 { branchToCompare = nil } }
+            ))
+        }
+        .sheet(item: $branchToSetUpstream) { branch in
+            SetUpstreamSheet(viewModel: viewModel, branch: branch, isPresented: .init(
+                get: { branchToSetUpstream != nil },
+                set: { if !$0 { branchToSetUpstream = nil } }
+            ))
         }
         .confirmationDialog(
             "Delete Branch",
@@ -110,6 +159,126 @@ struct BranchListView: View {
                 Text(error.localizedDescription)
             }
         }
+        .task {
+            await viewModel.refreshRepositoryState()
+        }
+    }
+
+    // MARK: - Context Menus
+
+    @ViewBuilder
+    private func localBranchContextMenu(for branch: Branch) -> some View {
+        if !branch.isCurrent {
+            Button("Checkout") {
+                Task { await viewModel.checkout(branch: branch) }
+            }
+
+            Divider()
+
+            Button("Merge into Current Branch...") {
+                branchToMerge = branch
+            }
+
+            Button("Rebase Current Branch onto This...") {
+                branchToRebase = branch
+            }
+
+            Divider()
+
+            Button("Compare with Current Branch...") {
+                branchToCompare = branch
+            }
+
+            Divider()
+        }
+
+        Button("Rename...") {
+            branchToRename = branch
+        }
+
+        if branch.upstream != nil {
+            Button("Unset Upstream") {
+                Task { await viewModel.unsetUpstream(branchName: branch.name) }
+            }
+        } else {
+            Button("Set Upstream...") {
+                branchToSetUpstream = branch
+            }
+        }
+
+        if !branch.isCurrent {
+            Divider()
+
+            Button("Delete", role: .destructive) {
+                branchToDelete = branch
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func remoteBranchContextMenu(for branch: Branch) -> some View {
+        Button("Checkout") {
+            Task { await viewModel.checkout(branchName: branch.name) }
+        }
+
+        Divider()
+
+        Button("Merge into Current Branch...") {
+            branchToMerge = branch
+        }
+
+        Button("Rebase Current Branch onto This...") {
+            branchToRebase = branch
+        }
+
+        Divider()
+
+        Button("Compare with Current Branch...") {
+            branchToCompare = branch
+        }
+    }
+}
+
+// MARK: - Merge/Rebase Actions View
+
+/// Actions shown when a merge or rebase is in progress.
+private struct MergeRebaseActionsView: View {
+    @ObservedObject var viewModel: BranchViewModel
+
+    var body: some View {
+        HStack(spacing: 8) {
+            if viewModel.repositoryState.isMerging {
+                Button("Abort Merge") {
+                    Task { await viewModel.abortMerge() }
+                }
+                .buttonStyle(.bordered)
+
+                Button("Continue Merge") {
+                    Task { await viewModel.continueMerge() }
+                }
+                .buttonStyle(.borderedProminent)
+            } else if viewModel.repositoryState.isRebasing {
+                Button("Abort Rebase") {
+                    Task { await viewModel.abortRebase() }
+                }
+                .buttonStyle(.bordered)
+
+                Button("Skip") {
+                    Task { await viewModel.skipRebase() }
+                }
+                .buttonStyle(.bordered)
+
+                Button("Continue Rebase") {
+                    Task { await viewModel.continueRebase() }
+                }
+                .buttonStyle(.borderedProminent)
+            }
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+        .background(Color(NSColor.controlBackgroundColor))
+
+        Divider()
     }
 }
 

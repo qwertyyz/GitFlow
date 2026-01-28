@@ -86,3 +86,253 @@ struct DeleteBranchCommand: VoidGitCommand {
         ["branch", force ? "-D" : "-d", branchName]
     }
 }
+
+// MARK: - Branch Rename Commands
+
+/// Command to rename a local branch.
+struct RenameBranchCommand: VoidGitCommand {
+    let oldName: String
+    let newName: String
+
+    var arguments: [String] {
+        ["branch", "-m", oldName, newName]
+    }
+}
+
+/// Command to delete a remote branch (used for remote rename).
+struct DeleteRemoteBranchCommand: VoidGitCommand {
+    let remoteName: String
+    let branchName: String
+
+    var arguments: [String] {
+        ["push", remoteName, "--delete", branchName]
+    }
+}
+
+/// Command to push a branch to remote with a specific name.
+struct PushBranchToRemoteCommand: VoidGitCommand {
+    let localBranch: String
+    let remoteName: String
+    let remoteBranch: String
+    let setUpstream: Bool
+
+    init(localBranch: String, remoteName: String, remoteBranch: String, setUpstream: Bool = true) {
+        self.localBranch = localBranch
+        self.remoteName = remoteName
+        self.remoteBranch = remoteBranch
+        self.setUpstream = setUpstream
+    }
+
+    var arguments: [String] {
+        var args = ["push", remoteName, "\(localBranch):\(remoteBranch)"]
+        if setUpstream {
+            args.insert("-u", at: 1)
+        }
+        return args
+    }
+}
+
+// MARK: - Upstream Commands
+
+/// Command to set upstream tracking branch.
+struct SetUpstreamCommand: VoidGitCommand {
+    let branchName: String
+    let upstreamRef: String
+
+    var arguments: [String] {
+        ["branch", "--set-upstream-to=\(upstreamRef)", branchName]
+    }
+}
+
+/// Command to unset upstream tracking branch.
+struct UnsetUpstreamCommand: VoidGitCommand {
+    let branchName: String
+
+    var arguments: [String] {
+        ["branch", "--unset-upstream", branchName]
+    }
+}
+
+// MARK: - Merge Commands
+
+/// The type of merge to perform.
+enum MergeType {
+    case normal
+    case squash
+    case fastForwardOnly
+    case noFastForward
+}
+
+/// Command to merge a branch into the current branch.
+struct MergeCommand: VoidGitCommand {
+    let branchName: String
+    let mergeType: MergeType
+    let message: String?
+
+    init(branchName: String, mergeType: MergeType = .normal, message: String? = nil) {
+        self.branchName = branchName
+        self.mergeType = mergeType
+        self.message = message
+    }
+
+    var arguments: [String] {
+        var args = ["merge"]
+
+        switch mergeType {
+        case .normal:
+            break
+        case .squash:
+            args.append("--squash")
+        case .fastForwardOnly:
+            args.append("--ff-only")
+        case .noFastForward:
+            args.append("--no-ff")
+        }
+
+        if let message = message {
+            args.append("-m")
+            args.append(message)
+        }
+
+        args.append(branchName)
+        return args
+    }
+}
+
+/// Command to abort a merge in progress.
+struct AbortMergeCommand: VoidGitCommand {
+    var arguments: [String] {
+        ["merge", "--abort"]
+    }
+}
+
+/// Command to continue a merge after resolving conflicts.
+struct ContinueMergeCommand: VoidGitCommand {
+    var arguments: [String] {
+        ["merge", "--continue"]
+    }
+}
+
+// MARK: - Rebase Commands
+
+/// Command to rebase the current branch onto another branch.
+struct RebaseCommand: VoidGitCommand {
+    let ontoBranch: String
+    let interactive: Bool
+
+    init(ontoBranch: String, interactive: Bool = false) {
+        self.ontoBranch = ontoBranch
+        self.interactive = interactive
+    }
+
+    var arguments: [String] {
+        var args = ["rebase"]
+        if interactive {
+            args.append("-i")
+        }
+        args.append(ontoBranch)
+        return args
+    }
+}
+
+/// Command to abort a rebase in progress.
+struct AbortRebaseCommand: VoidGitCommand {
+    var arguments: [String] {
+        ["rebase", "--abort"]
+    }
+}
+
+/// Command to continue a rebase after resolving conflicts.
+struct ContinueRebaseCommand: VoidGitCommand {
+    var arguments: [String] {
+        ["rebase", "--continue"]
+    }
+}
+
+/// Command to skip the current commit during rebase.
+struct SkipRebaseCommand: VoidGitCommand {
+    var arguments: [String] {
+        ["rebase", "--skip"]
+    }
+}
+
+// MARK: - Branch Comparison Commands
+
+/// Command to get the diff between two branches.
+struct BranchDiffCommand: GitCommand {
+    typealias Result = [FileDiff]
+
+    let baseBranch: String
+    let compareBranch: String
+
+    var arguments: [String] {
+        ["diff", "\(baseBranch)...\(compareBranch)"]
+    }
+
+    func parse(output: String) throws -> [FileDiff] {
+        DiffParser.parse(output)
+    }
+}
+
+/// Command to get the list of commits between two branches.
+struct BranchLogDiffCommand: GitCommand {
+    typealias Result = [Commit]
+
+    let baseBranch: String
+    let compareBranch: String
+    let limit: Int
+
+    init(baseBranch: String, compareBranch: String, limit: Int = 100) {
+        self.baseBranch = baseBranch
+        self.compareBranch = compareBranch
+        self.limit = limit
+    }
+
+    var arguments: [String] {
+        [
+            "log",
+            "--format=\(LogParser.formatString)",
+            "-n", "\(limit)",
+            "\(baseBranch)..\(compareBranch)"
+        ]
+    }
+
+    func parse(output: String) throws -> [Commit] {
+        try LogParser.parse(output)
+    }
+}
+
+/// Command to check if a rebase or merge is in progress.
+struct GetRepositoryStateCommand: GitCommand {
+    typealias Result = RepositoryState
+
+    var arguments: [String] {
+        ["status", "--porcelain=v2", "--branch"]
+    }
+
+    func parse(output: String) throws -> RepositoryState {
+        // Check for merge/rebase state indicators
+        var state = RepositoryState()
+
+        let lines = output.components(separatedBy: .newlines)
+        for line in lines {
+            if line.hasPrefix("# branch.head") {
+                let parts = line.split(separator: " ")
+                if parts.count >= 2 {
+                    state.currentBranch = String(parts[2])
+                }
+            }
+        }
+
+        return state
+    }
+}
+
+/// Represents the current state of the repository.
+struct RepositoryState {
+    var currentBranch: String?
+    var isMerging: Bool = false
+    var isRebasing: Bool = false
+    var isDetachedHead: Bool = false
+    var conflictedFiles: [String] = []
+}
