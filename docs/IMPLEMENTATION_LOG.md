@@ -41,12 +41,12 @@
 - [x] Accept ours/theirs/both
 - [x] Mark conflicts as resolved
 
-### Phase 5: Rebase & History Editing (New Feature)
-- [ ] Interactive rebase editor
-- [ ] Reorder commits
-- [ ] Squash/fixup/drop commits
-- [ ] Edit commit messages
-- [ ] Continue/abort/skip rebase
+### Phase 5: Rebase & History Editing (New Feature) ✅
+- [x] Interactive rebase editor
+- [x] Reorder commits
+- [x] Squash/fixup/drop commits
+- [x] Edit commit messages
+- [x] Continue/abort/skip rebase
 
 ### Phase 6: Submodules (New Feature) ✅
 - [x] Detect submodules
@@ -323,4 +323,46 @@
 - `SubmoduleStatus` - Status enum (upToDate, outOfDate, modified, uninitialized)
 - `SubmoduleConfig` - Configuration from .gitmodules
 - `SubmoduleParser` - Parser for submodule status and config output
+
+---
+
+### Phase 5: Rebase & History Editing (Completed)
+
+**Date**: 2026-01-27
+
+**Files Created**:
+- `GitFlow/Models/InteractiveRebase.swift` - Interactive rebase models (RebaseAction, RebaseEntry, InteractiveRebaseState)
+- `GitFlow/ViewModels/InteractiveRebaseViewModel.swift` - Interactive rebase management logic
+- `GitFlow/Views/Rebase/InteractiveRebaseView.swift` - Interactive rebase editor UI
+
+**Files Modified**:
+- `GitFlow/Services/Git/Commands/BranchCommand.swift` - Added interactive rebase commands
+- `GitFlow/Services/Git/GitService.swift` - Added interactive rebase service methods
+- `GitFlow/Services/Git/GitExecutor.swift` - Added environment variable support for commands
+
+**Features Implemented**:
+- [x] Interactive rebase editor with drag-and-drop reordering
+- [x] Reorder commits via move up/down or drag
+- [x] Pick, reword, edit, squash, fixup, drop actions
+- [x] Quick actions (squash all, drop all, reset)
+- [x] Reword commit message editor
+- [x] Rebase progress tracking
+- [x] Pause/continue/abort/skip rebase workflow
+- [x] Visual indicators for modified entries
+- [x] Summary of planned operations
+- [x] Check rebase state and progress
+
+**New Commands**:
+- `GetRebaseCommitsCommand` - Get commits for rebase planning
+- `GetRebaseStateCommand` - Check current rebase state
+- `GetRebaseProgressCommand` - Get current rebase step
+- `RebaseEditMessageCommand` - Edit commit message during rebase
+- `GetRebaseTodoPathCommand` - Get path to rebase todo file
+- `GetRebaseCurrentCommitCommand` - Get stopped commit during rebase
+
+**New Models**:
+- `RebaseAction` - Enum for rebase actions (pick, reword, edit, squash, fixup, drop)
+- `RebaseEntry` - Commit entry in interactive rebase sequence
+- `InteractiveRebaseState` - State of interactive rebase operation
+- `InteractiveRebaseConfig` - Full rebase configuration
 

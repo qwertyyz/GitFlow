@@ -256,6 +256,127 @@ struct SkipRebaseCommand: VoidGitCommand {
     }
 }
 
+// MARK: - Interactive Rebase Commands
+
+/// Command to get commits for interactive rebase planning.
+struct GetRebaseCommitsCommand: GitCommand {
+    typealias Result = [RebaseEntry]
+
+    let ontoBranch: String
+    let limit: Int
+
+    init(ontoBranch: String, limit: Int = 100) {
+        self.ontoBranch = ontoBranch
+        self.limit = limit
+    }
+
+    var arguments: [String] {
+        [
+            "log",
+            "--format=%H|%s|%an|%aI",
+            "--reverse",
+            "-n", "\(limit)",
+            "\(ontoBranch)..HEAD"
+        ]
+    }
+
+    func parse(output: String) throws -> [RebaseEntry] {
+        var entries: [RebaseEntry] = []
+        let dateFormatter = ISO8601DateFormatter()
+
+        for line in output.components(separatedBy: .newlines) {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            guard !trimmed.isEmpty else { continue }
+
+            let parts = trimmed.split(separator: "|", maxSplits: 3)
+            guard parts.count >= 2 else { continue }
+
+            let hash = String(parts[0])
+            let message = String(parts[1])
+            let author = parts.count > 2 ? String(parts[2]) : nil
+            let date = parts.count > 3 ? dateFormatter.date(from: String(parts[3])) : nil
+
+            entries.append(RebaseEntry(
+                commitHash: hash,
+                message: message,
+                action: .pick,
+                author: author,
+                date: date
+            ))
+        }
+
+        return entries
+    }
+}
+
+/// Command to check the current rebase state.
+struct GetRebaseStateCommand: GitCommand {
+    typealias Result = InteractiveRebaseState
+
+    let repositoryPath: String
+
+    var arguments: [String] {
+        // We check if rebase-merge or rebase-apply exists
+        ["rev-parse", "--git-dir"]
+    }
+
+    func parse(output: String) throws -> InteractiveRebaseState {
+        // This is a placeholder - actual state detection is done by checking files
+        return .idle
+    }
+}
+
+/// Command to get the current step in an interactive rebase.
+struct GetRebaseProgressCommand: GitCommand {
+    typealias Result = (current: Int, total: Int)?
+
+    var arguments: [String] {
+        ["rev-parse", "--git-dir"]
+    }
+
+    func parse(output: String) throws -> (current: Int, total: Int)? {
+        // The actual parsing is handled in GitService by reading the files
+        return nil
+    }
+}
+
+/// Command to edit the commit message during rebase.
+struct RebaseEditMessageCommand: VoidGitCommand {
+    let message: String
+
+    var arguments: [String] {
+        ["commit", "--amend", "-m", message]
+    }
+}
+
+/// Command to get the rebase todo file path.
+struct GetRebaseTodoPathCommand: GitCommand {
+    typealias Result = String
+
+    var arguments: [String] {
+        ["rev-parse", "--git-path", "rebase-merge/git-rebase-todo"]
+    }
+
+    func parse(output: String) throws -> String {
+        output.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+}
+
+/// Command to get the original commit being rebased.
+struct GetRebaseCurrentCommitCommand: GitCommand {
+    typealias Result = String?
+
+    var arguments: [String] {
+        ["rev-parse", "--git-path", "rebase-merge/stopped-sha"]
+    }
+
+    func parse(output: String) throws -> String? {
+        let path = output.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !path.isEmpty else { return nil }
+        return path
+    }
+}
+
 // MARK: - Branch Comparison Commands
 
 /// Command to get the diff between two branches.

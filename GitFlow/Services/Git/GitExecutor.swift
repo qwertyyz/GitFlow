@@ -87,6 +87,72 @@ actor GitExecutor {
         )
     }
 
+    /// Executes a Git command with additional environment variables.
+    /// - Parameters:
+    ///   - arguments: The Git command arguments (e.g., ["status", "--porcelain"]).
+    ///   - workingDirectory: The directory to run the command in.
+    ///   - environment: Additional environment variables to set.
+    ///   - timeout: Maximum time to wait for the command to complete.
+    /// - Returns: The execution result.
+    /// - Throws: GitError if the command fails to execute.
+    func execute(
+        arguments: [String],
+        workingDirectory: URL,
+        environment additionalEnvironment: [String: String],
+        timeout: TimeInterval? = nil
+    ) async throws -> ExecutionResult {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: gitPath)
+        process.arguments = arguments
+        process.currentDirectoryURL = workingDirectory
+
+        let stdoutPipe = Pipe()
+        let stderrPipe = Pipe()
+        process.standardOutput = stdoutPipe
+        process.standardError = stderrPipe
+
+        // Set up environment with additional variables
+        var environment = ProcessInfo.processInfo.environment
+        environment["GIT_TERMINAL_PROMPT"] = "0"  // Disable prompts
+        environment["LC_ALL"] = "C"  // Consistent output format
+        for (key, value) in additionalEnvironment {
+            environment[key] = value
+        }
+        process.environment = environment
+
+        do {
+            try process.run()
+        } catch {
+            throw GitError.gitNotFound
+        }
+
+        // Handle timeout
+        let effectiveTimeout = timeout ?? defaultTimeout
+        let timeoutTask = Task {
+            try await Task.sleep(nanoseconds: UInt64(effectiveTimeout * 1_000_000_000))
+            if process.isRunning {
+                process.terminate()
+            }
+        }
+
+        // Wait for completion
+        process.waitUntilExit()
+        timeoutTask.cancel()
+
+        // Read output
+        let stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
+        let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+
+        let stdout = String(data: stdoutData, encoding: .utf8) ?? ""
+        let stderr = String(data: stderrData, encoding: .utf8) ?? ""
+
+        return ExecutionResult(
+            stdout: stdout,
+            stderr: stderr,
+            exitCode: process.terminationStatus
+        )
+    }
+
     /// Executes a Git command and returns the stdout if successful.
     /// - Parameters:
     ///   - arguments: The Git command arguments.

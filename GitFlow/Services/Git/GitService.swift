@@ -704,6 +704,137 @@ actor GitService {
         )
     }
 
+    // MARK: - Interactive Rebase Operations
+
+    /// Gets the commits that would be rebased onto the target branch.
+    func getRebaseCommits(onto branch: String, in repository: Repository) async throws -> [RebaseEntry] {
+        let command = GetRebaseCommitsCommand(ontoBranch: branch)
+        let output = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+        return try command.parse(output: output)
+    }
+
+    /// Performs an interactive rebase with the specified entries.
+    func performInteractiveRebase(entries: [RebaseEntry], onto branch: String, in repository: Repository) async throws {
+        // Create a temporary script that will be used as the sequence editor
+        let tempDir = FileManager.default.temporaryDirectory
+        let todoFile = tempDir.appendingPathComponent("git-rebase-todo-\(UUID().uuidString)")
+        let editorScript = tempDir.appendingPathComponent("git-rebase-editor-\(UUID().uuidString).sh")
+
+        // Generate the todo content
+        let todoContent = entries.map { entry in
+            let message = entry.newMessage ?? entry.message
+            return "\(entry.action.rawValue) \(entry.shortHash) \(message)"
+        }.joined(separator: "\n")
+
+        // Write the todo content
+        try todoContent.write(to: todoFile, atomically: true, encoding: .utf8)
+
+        // Create editor script that replaces the rebase todo file
+        let editorContent = """
+        #!/bin/bash
+        cat "\(todoFile.path)" > "$1"
+        """
+        try editorContent.write(to: editorScript, atomically: true, encoding: .utf8)
+
+        // Make script executable
+        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: editorScript.path)
+
+        defer {
+            try? FileManager.default.removeItem(at: todoFile)
+            try? FileManager.default.removeItem(at: editorScript)
+        }
+
+        // Run the interactive rebase with our custom editor
+        let result = try await executor.execute(
+            arguments: ["rebase", "-i", branch],
+            workingDirectory: repository.rootURL,
+            environment: ["GIT_SEQUENCE_EDITOR": editorScript.path]
+        )
+
+        if !result.succeeded {
+            throw GitError.commandFailed(
+                command: "git rebase -i \(branch)",
+                exitCode: result.exitCode,
+                stderr: result.stderr
+            )
+        }
+    }
+
+    /// Gets the current progress of an interactive rebase.
+    func getRebaseProgress(in repository: Repository) async throws -> (current: Int, total: Int)? {
+        let rebaseMergeDir = repository.rootURL.appendingPathComponent(".git/rebase-merge")
+
+        guard FileManager.default.fileExists(atPath: rebaseMergeDir.path) else {
+            return nil
+        }
+
+        let msgNumFile = rebaseMergeDir.appendingPathComponent("msgnum")
+        let endFile = rebaseMergeDir.appendingPathComponent("end")
+
+        guard let msgNumData = FileManager.default.contents(atPath: msgNumFile.path),
+              let endData = FileManager.default.contents(atPath: endFile.path),
+              let msgNumStr = String(data: msgNumData, encoding: .utf8),
+              let endStr = String(data: endData, encoding: .utf8),
+              let current = Int(msgNumStr.trimmingCharacters(in: .whitespacesAndNewlines)),
+              let total = Int(endStr.trimmingCharacters(in: .whitespacesAndNewlines)) else {
+            return nil
+        }
+
+        return (current, total)
+    }
+
+    /// Edits the commit message during an interactive rebase.
+    func editRebaseCommitMessage(_ message: String, in repository: Repository) async throws {
+        let command = RebaseEditMessageCommand(message: message)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Checks if an interactive rebase is in progress.
+    func isRebaseInProgress(in repository: Repository) -> Bool {
+        let rebaseMergeDir = repository.rootURL.appendingPathComponent(".git/rebase-merge")
+        let rebaseApplyDir = repository.rootURL.appendingPathComponent(".git/rebase-apply")
+
+        return FileManager.default.fileExists(atPath: rebaseMergeDir.path)
+            || FileManager.default.fileExists(atPath: rebaseApplyDir.path)
+    }
+
+    /// Gets information about the current rebase state.
+    func getRebaseInfo(in repository: Repository) async throws -> (headName: String?, onto: String?)? {
+        let rebaseMergeDir = repository.rootURL.appendingPathComponent(".git/rebase-merge")
+
+        guard FileManager.default.fileExists(atPath: rebaseMergeDir.path) else {
+            return nil
+        }
+
+        let headNameFile = rebaseMergeDir.appendingPathComponent("head-name")
+        let ontoFile = rebaseMergeDir.appendingPathComponent("onto")
+
+        let headName: String?
+        if let data = FileManager.default.contents(atPath: headNameFile.path),
+           let str = String(data: data, encoding: .utf8) {
+            headName = str.trimmingCharacters(in: .whitespacesAndNewlines)
+                .replacingOccurrences(of: "refs/heads/", with: "")
+        } else {
+            headName = nil
+        }
+
+        let onto: String?
+        if let data = FileManager.default.contents(atPath: ontoFile.path),
+           let str = String(data: data, encoding: .utf8) {
+            onto = String(str.trimmingCharacters(in: .whitespacesAndNewlines).prefix(7))
+        } else {
+            onto = nil
+        }
+
+        return (headName, onto)
+    }
+
     // MARK: - Branch Comparison Operations
 
     /// Gets the diff between two branches.
