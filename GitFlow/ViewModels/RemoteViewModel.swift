@@ -228,4 +228,23 @@ final class RemoteViewModel: ObservableObject {
     var lastFetchDescription: String? {
         lastFetchDate?.formatted(.relative(presentation: .named))
     }
+
+    /// Prunes deleted remote branches.
+    func prune(remote: String) async {
+        isOperationInProgress = true
+        operationMessage = "Pruning \(remote)..."
+        defer {
+            isOperationInProgress = false
+            operationMessage = nil
+        }
+
+        do {
+            try await gitService.fetch(in: repository, remote: remote, prune: true)
+            error = nil
+        } catch let gitError as GitError {
+            error = gitError
+        } catch {
+            self.error = .unknown(message: error.localizedDescription)
+        }
+    }
 }

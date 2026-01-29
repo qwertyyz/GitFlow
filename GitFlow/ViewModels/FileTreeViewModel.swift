@@ -52,20 +52,16 @@ final class FileTreeViewModel: ObservableObject {
         isLoading = true
         defer { isLoading = false }
 
-        do {
-            // Load git status first
-            await loadGitStatus()
+        // Load git status first
+        await loadGitStatus()
 
-            // Create root node
-            let root = FileTreeNode.root(from: repository)
-            await loadChildren(for: root)
-            root.isExpanded = true
-            root.isLoaded = true
-            rootNode = root
-            error = nil
-        } catch {
-            self.error = error
-        }
+        // Create root node
+        let root = FileTreeNode.root(from: repository)
+        await loadChildren(for: root)
+        root.isExpanded = true
+        root.isLoaded = true
+        rootNode = root
+        error = nil
     }
 
     /// Refreshes the file tree.
@@ -237,12 +233,12 @@ final class FileTreeViewModel: ObservableObject {
 
         let fileURL = directory.url.appendingPathComponent(name)
 
-        do {
-            FileManager.default.createFile(atPath: fileURL.path, contents: nil)
+        let created = FileManager.default.createFile(atPath: fileURL.path, contents: nil)
+        if created {
             await loadChildren(for: directory)
             return .success
-        } catch {
-            return .failure(error)
+        } else {
+            return .failure(FileTreeError.accessDenied)
         }
     }
 

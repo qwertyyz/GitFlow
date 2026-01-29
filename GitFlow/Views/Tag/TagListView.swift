@@ -7,6 +7,9 @@ struct TagListView: View {
     @State private var showCreateTag: Bool = false
     @State private var tagToDelete: Tag?
 
+    // Local selection state to avoid "Publishing changes from within view updates" warning
+    @State private var localSelectedTag: Tag?
+
     var body: some View {
         VStack(spacing: 0) {
             // Header
@@ -40,7 +43,7 @@ struct TagListView: View {
                     description: "Create tags to mark important commits"
                 )
             } else {
-                List(viewModel.tags, selection: $viewModel.selectedTag) { tag in
+                List(viewModel.tags, selection: $localSelectedTag) { tag in
                     TagRow(tag: tag)
                         .tag(tag)
                         .contextMenu {
@@ -54,6 +57,12 @@ struct TagListView: View {
                         }
                 }
                 .listStyle(.inset)
+                .onChange(of: localSelectedTag) { newValue in
+                    // Defer sync to view model to avoid "Publishing changes from within view updates"
+                    Task { @MainActor in
+                        viewModel.selectedTag = newValue
+                    }
+                }
             }
 
             // Footer

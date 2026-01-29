@@ -1,35 +1,175 @@
 # GitFlow - macOS Git GUI
 
-A free, professional-grade Git GUI for macOS built with Swift and SwiftUI, featuring excellent diff visualization.
+A free, professional-grade Git GUI for macOS built with Swift and SwiftUI, featuring excellent diff visualization and complete GitTower feature parity.
+
+## Table of Contents
+
+- [Features](#features)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Usage Guide](#usage-guide)
+- [Keyboard Shortcuts](#keyboard-shortcuts)
+- [Service Integrations](#service-integrations)
+- [Advanced Features](#advanced-features)
+- [User Experience Design](#user-experience-design)
+- [Architecture](#architecture)
+- [Technical Decisions](#technical-decisions)
 
 ## Features
 
-### Core Features (P0 - Must Have)
-- **Open Local Repository**: Browse and open any Git repository on your system
+### Core Git Operations
+
+#### Working Tree & Staging
 - **Working Tree Status**: View staged, unstaged, and untracked files with clear visual indicators
-- **Stage/Unstage Files**: Easily move files between working tree and staging area
-- **Unified Diff View**: View changes with syntax highlighting and line numbers
-- **Create Commits**: Compose commit messages with subject line length guidance
+- **File Staging**: Stage entire files, individual hunks, or specific lines
+- **Partial Staging Indicator**: Half-checked icons show partially staged files
+- **Stage/Unstage All**: One-click staging for all changes
+- **Discard Changes**: Discard entire files, hunks, or selected lines with confirmation
 
-### Extended Features (P1 - Should Have)
-- **Commit History**: Browse commit history with author, date, and message
-- **Branch Management**: View local and remote branches
-- **Branch Switching**: Checkout existing branches
-- **Split Diff View**: Side-by-side comparison of changes
-- **Recent Repositories**: Quick access to previously opened repositories
+#### Commit Creation
+- **Commit Message Editor**: Subject line (50 char guide) and body (72 char wrap)
+- **Commit Templates**: Create, edit, delete, and import reusable templates
+- **Spell Checking**: Automatic spell check in commit messages
+- **Amend Commits**: Modify the last commit with or without message changes
+- **GPG Signing**: Sign commits with your GPG key
+- **Override Author**: Custom author identity per commit
+- **Gitmoji Support**: Type "::" in subject to open emoji picker
 
-### Additional Features (P2)
-- **Stash Management**: Create, apply, pop, and drop stashes
-- **Remote Operations**: Fetch, pull, and push to remotes with options for rebase and force push
-- **Tag Management**: Create lightweight and annotated tags, push tags to remotes
-- **Create/Delete Branches**: Full branch lifecycle management
-- **Clone Repository**: Clone repositories from URLs (HTTPS, SSH, or local paths)
-- **Settings/Preferences**: Customizable diff display, font sizes, and Git executable path
-- **Hunk-Level Staging**: Stage or unstage individual hunks instead of entire files
+### Diff Visualization (Core Specialization)
 
-### Planned Features
-- [ ] Word-level diff highlighting
-- [ ] Commit graph visualization
+- **Unified Diff View**: Single-column diff with context
+- **Split Diff View**: Side-by-side comparison with scroll sync
+- **Syntax Highlighting**: Language-aware highlighting for 200+ languages
+- **Word-Level Highlighting**: Smart tokenization identifies exactly what changed
+- **Line Numbers**: Toggle old and new line numbers
+- **Whitespace Visualization**: Show spaces, tabs, and newlines
+- **Ignore Whitespace**: Option to hide whitespace-only changes
+- **Image Diffing**: Visual comparison for PNG, JPG, and other formats
+- **Diff Search**: Find text within diffs with ⌘F
+- **Virtualized Rendering**: Smooth performance with 5000+ line diffs
+
+### Branch Management
+
+- **Local Branches**: Create, rename, delete, checkout branches
+- **Remote Branches**: View, checkout, track remote branches
+- **Visual Branch Graph**: Interactive commit graph visualization
+- **Ahead/Behind Indicators**: Track sync status with upstream
+- **Set Upstream**: Configure tracking for local branches
+- **Branch Comparison**: Compare two branches side-by-side
+- **Merge Operations**: Normal, squash, and fast-forward merge
+- **Rebase Operations**: Rebase onto any branch
+- **Branch Review**: Identify stale and merged branches
+- **Branch Archiving**: Archive branches to hide without deleting
+
+### Tag Management
+
+- **Lightweight Tags**: Simple tags without metadata
+- **Annotated Tags**: Tags with message and author info
+- **Push Tags**: Push individual or all tags to remote
+- **Delete Tags**: Remove local and remote tags
+- **Create from Commit**: Tag any commit via drag-and-drop
+
+### Remote Operations
+
+- **Add/Remove Remotes**: Manage multiple remotes
+- **Rename Remotes**: Change remote names
+- **Edit Remote URL**: Modify fetch and push URLs
+- **Fetch**: Download changes from all or specific remotes
+- **Pull**: Fetch and merge or rebase
+- **Push**: Push with force push and force-with-lease options
+- **Prune**: Remove stale remote-tracking branches
+- **Sync**: One-click fetch, pull, and push
+
+### Stash Management
+
+- **Create Stash**: Save work-in-progress with optional message
+- **Include Untracked**: Option to stash untracked files
+- **Include Ignored**: Option to stash ignored files
+- **Apply Stash**: Apply without removing from stash list
+- **Pop Stash**: Apply and remove from stash list
+- **Drop Stash**: Delete a stash
+- **Rename Stash**: Change stash message
+- **View Stash Diff**: Inspect stash contents before applying
+- **Partial Apply**: Apply only specific files from a stash
+
+### Commit History
+
+- **Commit Graph**: Visual representation of branch history
+- **Commit List**: Linear view with metadata
+- **Commit Details**: Full commit info, changed files, and diff
+- **Author Avatars**: Gravatar integration
+- **Filter by Author**: Show only specific author's commits
+- **Filter by Date**: Commits within a date range
+- **Search Messages**: Find commits by message content
+- **Filter by Path**: Commits affecting specific files
+- **File History**: Full history for any file
+- **Blame View**: Line-by-line attribution with age coloring
+- **Copy Commit Hash**: Quick copy SHA to clipboard
+
+### Commit Operations
+
+- **Revert Commit**: Create a commit that undoes changes
+- **Cherry-Pick**: Apply any commit to current branch
+- **Reset (Soft/Mixed/Hard)**: Move HEAD with different staging behaviors
+- **Create Branch**: New branch from any commit
+- **Create Tag**: Tag any commit
+
+### Interactive Rebase
+
+- **Visual Rebase Editor**: Drag-and-drop interface
+- **Reorder Commits**: Move commits up/down
+- **Squash Commits**: Combine multiple commits
+- **Fixup Commits**: Squash without message merge
+- **Drop Commits**: Remove from history
+- **Edit Commits**: Stop to modify commit content
+- **Reword Messages**: Change commit messages only
+- **Continue/Skip/Abort**: Full control over rebase flow
+
+### Merge Conflict Resolution
+
+- **Conflict Detection**: Automatic identification of conflicts
+- **Three-Way Editor**: View ours, theirs, and base versions
+- **Accept Ours/Theirs/Both**: One-click resolution options
+- **Manual Editing**: Full control over final resolution
+- **Mark Resolved**: Complete conflict resolution workflow
+
+### Submodules
+
+- **Detect Submodules**: Automatic detection on repo open
+- **Initialize**: Clone submodule content
+- **Update**: Pull submodule changes
+- **Update All**: Recursive update
+- **Open Submodule**: Open as separate repository
+- **View Diff**: See submodule pointer changes
+- **Add Submodule**: Add new submodule by URL
+- **Remove Submodule**: Clean removal
+
+### Worktrees
+
+- **View Worktrees**: List all linked worktrees
+- **Create Worktree**: New worktree for parallel work
+- **Remove Worktree**: Clean deletion
+
+### Reflog
+
+- **View Reflog**: Full reference log history
+- **Filter by Ref**: Branch-specific reflog
+- **Restore Commits**: Recover lost commits
+- **Restore Branches**: Recreate deleted branches
+
+### Git Flow Support
+
+- **Initialize**: Set up git-flow branches
+- **Features**: Start and finish features
+- **Releases**: Start and finish releases
+- **Hotfixes**: Start and finish hotfixes
+
+### Git LFS
+
+- **LFS Detection**: Automatic detection of tracked files
+- **File Indicators**: Visual badge for LFS files
+- **Track/Untrack**: Manage LFS patterns
+- **Fetch/Pull/Push**: Automatic with git operations
 
 ## Requirements
 
@@ -38,20 +178,11 @@ A free, professional-grade Git GUI for macOS built with Swift and SwiftUI, featu
 
 ## Installation
 
-### Download DMG (Recommended)
+### Quick Install (Recommended)
 
-1. Go to the [Releases page](https://github.com/Nicolas-Arsenault/GitFlow/releases)
-2. Download the latest `GitFlow-x.x.x.dmg`
-3. Open the DMG and drag GitFlow to Applications
-
-**First Launch (Important):** macOS will show a warning because the app isn't notarized. To open it:
-
-- **Option 1:** Right-click (or Control-click) GitFlow.app and select "Open", then click "Open" in the dialog
-- **Option 2:** Run this command in Terminal:
-  ```bash
-  xattr -cr /Applications/GitFlow.app
-  ```
-  Then open the app normally
+```bash
+curl -fsSL https://raw.githubusercontent.com/Nicolas-Arsenault/GitFlow/main/scripts/install.sh | bash
+```
 
 ### Homebrew
 
@@ -62,120 +193,93 @@ brew install --cask gitflow-gui
 
 To update:
 ```bash
-brew upgrade --cask gitflow
+brew upgrade --cask gitflow-gui
 ```
+
+### Download DMG
+
+1. Go to the [Releases page](https://github.com/Nicolas-Arsenault/GitFlow/releases)
+2. Download the latest `GitFlow-x.x.x.dmg`
+3. Open the DMG and drag GitFlow to Applications
+
+**First Launch:** macOS shows a warning for unsigned apps. To open:
+- Right-click GitFlow.app and select "Open", then click "Open" in the dialog
+- Or run: `xattr -cr /Applications/GitFlow.app`
 
 ### Building from Source
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/Nicolas-Arsenault/GitFlow.git
-   cd GitFlow
-   ```
+```bash
+git clone https://github.com/Nicolas-Arsenault/GitFlow.git
+cd GitFlow
+./scripts/build-dmg.sh
+```
 
-2. **Option A**: Open in Xcode:
-   ```bash
-   open GitFlow.xcodeproj
-   ```
-   Then build and run (⌘R)
-
-3. **Option B**: Build DMG from command line:
-   ```bash
-   ./scripts/build-dmg.sh
-   ```
-   This creates a universal binary (arm64 + x86_64) DMG file.
-
-## Usage
+## Usage Guide
 
 ### Opening a Repository
 
 1. Launch GitFlow
 2. Click "Open Repository" or use ⌘O
 3. Select a folder containing a Git repository
-4. The repository will load with its current status
+4. Or drag a folder onto the app window
 
 ### Cloning a Repository
 
-1. Launch GitFlow
-2. Click "Clone Repository" on the welcome screen
-3. Enter the repository URL (HTTPS, SSH, or local path)
-4. Choose a destination folder
-5. Optionally specify a branch to clone
-6. Click "Clone" to start the clone operation
+1. Click "Clone Repository" on the welcome screen
+2. Enter the repository URL (HTTPS, SSH, or local path)
+3. Choose a destination folder
+4. Optionally specify a branch to clone
+5. Click "Clone"
 
 ### Staging Changes
 
-- **Stage a file**: Click on a file in the "Changes" section, right-click and select "Stage"
-- **Stage all**: Click "Stage All" in the section header
-- **Unstage a file**: Right-click a staged file and select "Unstage"
-- **Unstage all**: Click "Unstage All" in the section header
-- **Hunk-level staging**: Hover over a hunk header in the diff view to see "Stage Hunk" or "Unstage Hunk" buttons
+- **Stage File**: Click checkbox, right-click → Stage, or press Space
+- **Stage All**: Click "Stage All" button
+- **Stage Hunk**: Hover over hunk header → "Stage Hunk" button
+- **Stage Lines**: Select lines in diff → "Stage Lines" button
+- **Unstage**: Same operations in staged section
 
 ### Creating Commits
 
 1. Stage the files you want to commit
-2. Enter a commit message in the text area at the bottom
+2. Enter a commit message (subject and optional body)
 3. Click "Commit" or press ⌘↩
-
-**Commit Message Guidelines**:
-- Subject line ideally under 50 characters
-- Hard limit at 72 characters
-- Leave a blank line before the body (if any)
 
 ### Viewing Diffs
 
-- **Select a file** to view its changes in the diff pane
-- **Toggle view mode**: Use the Unified/Split toggle in the toolbar
-- **Line numbers**: Enable/disable via the settings menu
-- **Search in diff**: Press ⌘F or click the magnifying glass to search within the diff
-  - Yellow highlighting shows all matches
-  - Orange highlighting shows the current match
-  - Use Enter or the arrow buttons to navigate between matches
-  - Press Escape to close the search bar
+- Select a file to view changes in the diff pane
+- Toggle Unified/Split view in toolbar
+- Enable/disable line numbers in settings
+- Search with ⌘F, navigate with Enter or arrow buttons
 
 ### Browsing History
 
 1. Click "History" in the sidebar
-2. Select a commit to view its details and changes
-3. The diff pane shows all files changed in that commit
+2. Select a commit to view details and changes
+3. Use filters to find specific commits
 
 ### Managing Branches
 
 1. Click "Branches" in the sidebar
-2. **Checkout**: Double-click a branch or right-click and select "Checkout"
-3. **Create**: Click the + button to create a new branch
-4. **Delete**: Right-click a branch and select "Delete"
+2. **Checkout**: Double-click or right-click → Checkout
+3. **Create**: Click + button
+4. **Delete**: Right-click → Delete
+5. **Merge**: Right-click → Merge Into Current
+6. **Drag**: Drag branch to merge, ⌥-drag to rebase
 
 ### Managing Stashes
 
 1. Click "Stashes" in the sidebar
-2. **Create Stash**: Click the + button, optionally add a message and include untracked files
-3. **Apply Stash**: Right-click a stash and select "Apply" (keeps the stash)
-4. **Pop Stash**: Right-click and select "Pop" (applies and removes the stash)
-5. **Drop Stash**: Right-click and select "Drop" to delete a stash
-6. **Clear All**: Click "Clear All" in the footer to remove all stashes
+2. **Create**: Click + button, add message
+3. **Apply/Pop/Drop**: Right-click menu
+4. **View**: Select to see stash contents
 
-### Managing Tags
+### Remote Operations
 
-1. Click "Tags" in the sidebar
-2. **Create Tag**: Click the + button, choose between lightweight or annotated tag
-3. **Push Tag**: Right-click a tag and select "Push to Remote"
-4. **Delete Tag**: Right-click a tag and select "Delete"
-
-### Syncing with Remotes
-
-1. Click "Sync" in the sidebar
-2. **Fetch**: Click "Fetch" to download changes from all remotes
-3. **Pull**: Click "Pull" to fetch and merge changes (right-click for rebase option)
-4. **Push**: Click "Push" to upload commits (right-click for force push or set upstream options)
-
-### Settings
-
-Access settings via **GitFlow > Settings** (⌘,):
-
-- **General**: Configure behavior preferences like showing remote branches
-- **Diff**: Set default view mode (unified/split), line numbers, line wrapping, and font size
-- **Git**: Specify a custom Git executable path
+- **Fetch**: Toolbar button or Sync view
+- **Pull**: Toolbar button (right-click for rebase option)
+- **Push**: Toolbar button (right-click for force push)
+- **Sync**: Toolbar button for fetch + pull + push
 
 ## Keyboard Shortcuts
 
@@ -184,62 +288,137 @@ Access settings via **GitFlow > Settings** (⌘,):
 | Open Repository | ⌘O |
 | Refresh | ⌘R |
 | Commit | ⌘↩ |
+| Commit and Push | ⌘⇧↩ |
 | Search in Diff | ⌘F |
+| Command Palette | ⌘K |
+| Working Copy | ⌘1 |
+| History | ⌘2 |
+| Stashes | ⌘3 |
+| Pull Requests | ⌘4 |
+| Reflog | ⌘5 |
+| Jump to HEAD | ⌘0 |
+| Navigate Back | ⌘[ |
+| Navigate Forward | ⌘] |
+| New Branch | ⌘B |
+| Switch Branch | ⌘⇧B |
+| Stash Changes | ⌘⇧S |
+| Settings | ⌘, |
+
+## Service Integrations
+
+### GitHub
+- OAuth authentication
+- Browse and clone repositories
+- View and create pull requests
+- PR diff viewer with comments
+- Approve, request changes, merge PRs
+
+### GitLab
+- Personal Access Token authentication
+- Browse and clone projects
+- View and create merge requests
+- MR diff viewer with notes
+- Approve, close, merge MRs
+
+### Bitbucket
+- App Password authentication
+- Browse workspaces and repositories
+- View and create pull requests
+- PR management
+
+### Azure DevOps
+- Personal Access Token authentication
+- Browse organizations and projects
+- View and create pull requests
+
+### Gitea
+- Personal Access Token authentication
+- Self-hosted server support
+- Repository browsing
+- Pull request management
+
+### Beanstalk
+- Token authentication
+- Repository browsing
+- Pull request support
+
+## Advanced Features
+
+### Interactive Rebase
+1. In History, right-click a commit → "Interactive Rebase"
+2. Drag commits to reorder
+3. Select action for each commit (pick, squash, fixup, drop, edit, reword)
+4. Click "Start Rebase"
+5. Handle conflicts if any, then continue
+
+### Drag and Drop Operations
+- **Merge**: Drag branch onto current branch
+- **Rebase**: ⌥-drag branch onto current branch
+- **Cherry-Pick**: Drag commit to Working Copy
+- **Create Branch**: Drag commit to Branches header
+- **Create Tag**: Drag commit to Tags header
+- **Create PR**: Drag branch to Pull Requests section
+- **Apply Stash**: Drag stash to Working Copy
+- **Stage File**: Drag file to staged area
+
+### Patches
+- **Create Patch**: Right-click changes or commits → Create Patch
+- **Apply Patch**: Repository menu → Apply Patch
+
+### Export
+- **Export as ZIP**: Right-click commit → Export as ZIP
+- **Save as Patch**: Right-click commit → Create Patch
 
 ## User Experience Design
 
-GitFlow follows a carefully crafted UX philosophy designed to reduce Git anxiety and create a calm, trustworthy interface.
-
 ### Design Principles
 
-1. **Calm and Professional**: Muted color palette that supports meaning without alarming users
-2. **Accessibility First**: Visual indicators never rely on color alone; icons and shapes provide redundant cues
-3. **Descriptive Actions**: Button labels describe outcomes, not mechanisms ("Discard Changes" instead of "OK")
-4. **Safety by Default**: All destructive actions require confirmation with clear consequences explained
-5. **Progressive Disclosure**: Advanced options appear on hover or in context menus
+1. **Safety First**: Confirmation for all destructive actions
+2. **Calm Interface**: Muted colors that support meaning without alarming
+3. **Accessibility**: Never rely on color alone; icons provide redundant cues
+4. **Descriptive Actions**: Labels describe outcomes ("Discard Changes" not "OK")
+5. **Progressive Disclosure**: Advanced options in context menus
 
-### Design System
+### Color System
 
-The app uses a centralized design system (`DesignSystem.swift`) with:
-
-- **Color Palette**: Muted, accessible colors for Git semantics (green=safe, red=destructive, amber=warning, blue=info)
-- **Typography Scale**: Consistent font hierarchy following macOS conventions
-- **Spacing Scale**: 4pt grid-based spacing for visual consistency
-- **Accessibility**: Colorblind-safe palette, icon+color indicators, screen reader support
+- **Green**: Safe/additive actions (stage, create, add)
+- **Red**: Destructive actions (delete, discard, force push)
+- **Amber**: Warnings and caution
+- **Blue**: Informational and navigation
 
 ### Error Handling
 
-Errors are displayed with a helpful tone:
+Errors display with:
 - Clear explanation of what went wrong
 - Why it happened (when known)
-- Actionable suggestions for recovery
-
-### Empty States
-
-When no content is available, the app explains:
-- What's missing
-- Why it might be missing
-- A suggested next action (with optional action button)
+- Actionable recovery suggestions
 
 ## Architecture
 
-GitFlow follows the MVVM (Model-View-ViewModel) architecture pattern:
+GitFlow follows MVVM (Model-View-ViewModel):
 
-- **Models**: Pure data structures representing Git entities
+- **Models**: Pure data structures for Git entities
 - **ViewModels**: Business logic and state management
-- **Views**: SwiftUI views for the user interface
-- **Services**: Git command execution and parsing
+- **Views**: SwiftUI user interface
+- **Services**: Git command execution and API integrations
 
-For detailed architecture information, see [architecture.md](./architecture.md).
+See [architecture.md](./architecture.md) for detailed information.
 
 ## Technical Decisions
 
 | Decision | Rationale |
 |----------|-----------|
-| System Git CLI | Full compatibility with user's Git config, hooks, and features |
+| System Git CLI | Full compatibility with user's config, hooks, and features |
 | MVVM Architecture | Natural fit for SwiftUI, testable ViewModels |
 | Async/await | UI stays responsive during Git operations |
 | Value-type Models | Thread-safe, automatic memory management |
+| Actor-based Services | Safe concurrent access to shared resources |
+
+## Feature Progress
+
+See [FEATURES_PROGRESS.md](./FEATURES_PROGRESS.md) for the complete feature tracking toward GitTower parity.
+
+**Current Status: 325 features implemented (100% complete)**
 
 ## Contributing
 

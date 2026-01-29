@@ -587,6 +587,37 @@
 
 ---
 
+### Secure GitHub Token Storage (Completed)
+
+**Date**: 2026-01-28
+
+**Files Created**:
+- `GitFlow/Services/Persistence/KeychainService.swift` - Secure Keychain wrapper for sensitive data storage
+
+**Files Modified**:
+- `GitFlow/ViewModels/GitHubViewModel.swift` - Integrated Keychain storage for GitHub token persistence
+
+**Features Implemented**:
+- [x] Secure token storage using macOS Keychain
+- [x] Automatic token persistence across app launches
+- [x] Token loaded on ViewModel initialization
+- [x] Token saved automatically when changed
+- [x] Logout clears token from both memory and Keychain
+- [x] Keychain accessibility set to `afterFirstUnlockThisDeviceOnly` (no iCloud backup)
+
+**Security Properties**:
+- Token encrypted at rest by Keychain
+- Protected by app's code signing identity
+- Not backed up to iCloud (prevents token leakage)
+- Accessible only after device first unlock
+
+**New Types**:
+- `KeychainService` - Reusable wrapper for Keychain operations
+- `KeychainError` - Error types for Keychain failures
+- `KeychainAccount` - Constants for Keychain account identifiers
+
+---
+
 ## Summary
 
 All 12 phases have been successfully implemented:

@@ -1,7 +1,8 @@
 import Foundation
+import SwiftUI
 
 /// Represents a GitHub repository.
-struct GitHubRepository: Codable, Identifiable, Equatable {
+struct GitHubRepository: Codable, Identifiable, Equatable, Hashable {
     let id: Int
     let name: String
     let fullName: String
@@ -33,7 +34,7 @@ struct GitHubRepository: Codable, Identifiable, Equatable {
 }
 
 /// Represents a GitHub user.
-struct GitHubUser: Codable, Identifiable, Equatable {
+struct GitHubUser: Codable, Identifiable, Equatable, Hashable {
     let id: Int
     let login: String
     let avatarUrl: String
@@ -116,7 +117,7 @@ struct GitHubIssue: Codable, Identifiable, Equatable {
 }
 
 /// Represents a GitHub label.
-struct GitHubLabel: Codable, Identifiable, Equatable {
+struct GitHubLabel: Codable, Identifiable, Equatable, Hashable {
     let id: Int
     let name: String
     let color: String
@@ -124,7 +125,7 @@ struct GitHubLabel: Codable, Identifiable, Equatable {
 }
 
 /// Represents a GitHub pull request.
-struct GitHubPullRequest: Codable, Identifiable, Equatable {
+struct GitHubPullRequest: Codable, Identifiable, Equatable, Hashable {
     let id: Int
     let number: Int
     let title: String
@@ -166,8 +167,29 @@ struct GitHubPullRequest: Codable, Identifiable, Equatable {
     }
 }
 
+/// Represents a file changed in a pull request.
+struct GitHubPRFile: Codable {
+    let sha: String?
+    let filename: String
+    let status: String
+    let additions: Int
+    let deletions: Int
+    let changes: Int
+    let blobUrl: String?
+    let rawUrl: String?
+    let contentsUrl: String?
+    let patch: String?
+
+    enum CodingKeys: String, CodingKey {
+        case sha, filename, status, additions, deletions, changes, patch
+        case blobUrl = "blob_url"
+        case rawUrl = "raw_url"
+        case contentsUrl = "contents_url"
+    }
+}
+
 /// Represents a branch reference in a pull request.
-struct GitHubBranchRef: Codable, Equatable {
+struct GitHubBranchRef: Codable, Equatable, Hashable {
     let ref: String
     let sha: String
     let repo: GitHubRepository?
@@ -250,6 +272,20 @@ struct GitHubCheckRun: Codable, Identifiable, Equatable {
     }
 }
 
+/// Represents a GitHub branch.
+struct GitHubBranch: Codable, Identifiable, Equatable {
+    let name: String
+    let protected: Bool
+    let commit: BranchCommit
+
+    var id: String { name }
+
+    struct BranchCommit: Codable, Equatable {
+        let sha: String
+        let url: String
+    }
+}
+
 /// Information extracted from a GitHub remote URL.
 struct GitHubRemoteInfo: Equatable {
     let owner: String
@@ -302,4 +338,52 @@ struct GitHubRemoteInfo: Equatable {
             repo: String(parts[1])
         )
     }
+}
+
+/// Represents a file changed in a pull request (for display purposes).
+struct PRFileChange: Identifiable, Hashable {
+    let id: String
+    let filename: String
+    let status: FileStatus
+    let additions: Int
+    let deletions: Int
+    let changes: Int
+    let patch: String?
+
+    enum FileStatus: String {
+        case added
+        case removed
+        case modified
+        case renamed
+        case copied
+        case changed
+        case unchanged
+
+        var icon: String {
+            switch self {
+            case .added: return "plus.circle.fill"
+            case .removed: return "minus.circle.fill"
+            case .modified: return "pencil.circle.fill"
+            case .renamed: return "arrow.right.circle.fill"
+            case .copied: return "doc.on.doc.fill"
+            case .changed: return "circle.fill"
+            case .unchanged: return "circle"
+            }
+        }
+
+        var color: Color {
+            switch self {
+            case .added: return .green
+            case .removed: return .red
+            case .modified: return .orange
+            case .renamed: return .blue
+            case .copied: return .purple
+            case .changed: return .yellow
+            case .unchanged: return .gray
+            }
+        }
+    }
+
+    var statusIcon: String { status.icon }
+    var statusColor: Color { status.color }
 }

@@ -786,6 +786,38 @@ actor GitService {
         )
     }
 
+    // MARK: - Cherry-pick Operations
+
+    /// Cherry-picks a commit onto the current branch.
+    /// - Parameters:
+    ///   - commitHash: The hash of the commit to cherry-pick.
+    ///   - repository: The repository.
+    func cherryPick(commitHash: String, in repository: Repository) async throws {
+        let args = ["cherry-pick", commitHash]
+        _ = try await executor.executeOrThrow(
+            arguments: args,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Aborts a cherry-pick in progress.
+    func abortCherryPick(in repository: Repository) async throws {
+        let args = ["cherry-pick", "--abort"]
+        _ = try await executor.executeOrThrow(
+            arguments: args,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Continues a cherry-pick after conflicts have been resolved.
+    func continueCherryPick(in repository: Repository) async throws {
+        let args = ["cherry-pick", "--continue"]
+        _ = try await executor.executeOrThrow(
+            arguments: args,
+            workingDirectory: repository.rootURL
+        )
+    }
+
     // MARK: - Rebase Operations
 
     /// Rebases the current branch onto another branch.
@@ -1015,6 +1047,252 @@ actor GitService {
         return state
     }
 
+    // MARK: - Git-Flow Operations
+
+    /// Checks if git-flow is initialized in the repository.
+    func isGitFlowInitialized(in repository: Repository) async throws -> Bool {
+        let command = CheckGitFlowInitializedCommand()
+        let result = try await executor.execute(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+        return result.succeeded && (try? command.parse(output: result.stdout)) == true
+    }
+
+    /// Gets the git-flow configuration if initialized.
+    func getGitFlowConfig(in repository: Repository) async throws -> GitFlowConfig? {
+        let command = GetGitFlowConfigCommand()
+        let result = try await executor.execute(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+        guard result.succeeded else { return nil }
+        return try command.parse(output: result.stdout)
+    }
+
+    /// Initializes git-flow in the repository.
+    func initializeGitFlow(config: GitFlowConfig, in repository: Repository) async throws {
+        // Set all git-flow config values
+        let configPairs: [(String, String)] = [
+            ("gitflow.branch.master", config.mainBranch),
+            ("gitflow.branch.develop", config.developBranch),
+            ("gitflow.prefix.feature", config.featurePrefix),
+            ("gitflow.prefix.release", config.releasePrefix),
+            ("gitflow.prefix.hotfix", config.hotfixPrefix),
+            ("gitflow.prefix.support", config.supportPrefix),
+            ("gitflow.prefix.versiontag", config.versionTagPrefix)
+        ]
+
+        for (key, value) in configPairs {
+            _ = try await executor.executeOrThrow(
+                arguments: ["config", key, value],
+                workingDirectory: repository.rootURL
+            )
+        }
+
+        // Create develop branch if it doesn't exist
+        let branches = try await getBranches(in: repository, includeRemote: false)
+        if !branches.contains(where: { $0.name == config.developBranch }) {
+            try await createBranch(name: config.developBranch, in: repository)
+        }
+    }
+
+    /// Starts a new feature branch.
+    func startFeature(name: String, config: GitFlowConfig, in repository: Repository) async throws {
+        let branchName = config.featureBranchName(name)
+        try await createBranch(name: branchName, startPoint: config.developBranch, in: repository)
+        try await checkout(branch: branchName, in: repository)
+    }
+
+    /// Finishes a feature branch by merging it to develop.
+    func finishFeature(name: String, config: GitFlowConfig, shouldDeleteBranch: Bool = true, in repository: Repository) async throws {
+        let branchName = config.featureBranchName(name)
+
+        // Checkout develop
+        try await checkout(branch: config.developBranch, in: repository)
+
+        // Merge feature branch with no-ff
+        _ = try await executor.executeOrThrow(
+            arguments: ["merge", "--no-ff", branchName, "-m", "Merge branch '\(branchName)' into \(config.developBranch)"],
+            workingDirectory: repository.rootURL
+        )
+
+        // Delete feature branch if requested
+        if shouldDeleteBranch {
+            try await deleteBranch(name: branchName, in: repository)
+        }
+    }
+
+    /// Starts a new release branch.
+    func startRelease(version: String, config: GitFlowConfig, in repository: Repository) async throws {
+        let branchName = config.releaseBranchName(version)
+        try await createBranch(name: branchName, startPoint: config.developBranch, in: repository)
+        try await checkout(branch: branchName, in: repository)
+    }
+
+    /// Finishes a release branch by merging to main and develop, and creating a tag.
+    func finishRelease(version: String, config: GitFlowConfig, tagMessage: String? = nil, deleteBranch: Bool = true, in repository: Repository) async throws {
+        let branchName = config.releaseBranchName(version)
+        let tagName = config.tagName(version)
+
+        // Checkout main and merge release
+        try await checkout(branch: config.mainBranch, in: repository)
+        _ = try await executor.executeOrThrow(
+            arguments: ["merge", "--no-ff", branchName, "-m", "Merge branch '\(branchName)'"],
+            workingDirectory: repository.rootURL
+        )
+
+        // Create tag
+        try await createTag(name: tagName, message: tagMessage, in: repository)
+
+        // Checkout develop and merge release
+        try await checkout(branch: config.developBranch, in: repository)
+        _ = try await executor.executeOrThrow(
+            arguments: ["merge", "--no-ff", branchName, "-m", "Merge branch '\(branchName)' into \(config.developBranch)"],
+            workingDirectory: repository.rootURL
+        )
+
+        // Delete release branch if requested
+        if deleteBranch {
+            try await self.deleteBranch(name: branchName, in: repository)
+        }
+    }
+
+    /// Starts a new hotfix branch.
+    func startHotfix(version: String, config: GitFlowConfig, in repository: Repository) async throws {
+        let branchName = config.hotfixBranchName(version)
+        try await createBranch(name: branchName, startPoint: config.mainBranch, in: repository)
+        try await checkout(branch: branchName, in: repository)
+    }
+
+    /// Finishes a hotfix branch by merging to main and develop, and creating a tag.
+    func finishHotfix(version: String, config: GitFlowConfig, tagMessage: String? = nil, deleteBranch: Bool = true, in repository: Repository) async throws {
+        let branchName = config.hotfixBranchName(version)
+        let tagName = config.tagName(version)
+
+        // Checkout main and merge hotfix
+        try await checkout(branch: config.mainBranch, in: repository)
+        _ = try await executor.executeOrThrow(
+            arguments: ["merge", "--no-ff", branchName, "-m", "Merge branch '\(branchName)'"],
+            workingDirectory: repository.rootURL
+        )
+
+        // Create tag
+        try await createTag(name: tagName, message: tagMessage, in: repository)
+
+        // Checkout develop and merge hotfix
+        try await checkout(branch: config.developBranch, in: repository)
+        _ = try await executor.executeOrThrow(
+            arguments: ["merge", "--no-ff", branchName, "-m", "Merge branch '\(branchName)' into \(config.developBranch)"],
+            workingDirectory: repository.rootURL
+        )
+
+        // Delete hotfix branch if requested
+        if deleteBranch {
+            try await self.deleteBranch(name: branchName, in: repository)
+        }
+    }
+
+    /// Gets the git-flow state including active feature/release/hotfix branches.
+    func getGitFlowState(in repository: Repository) async throws -> GitFlowState {
+        guard let config = try await getGitFlowConfig(in: repository) else {
+            return .notInitialized
+        }
+
+        let branches = try await getBranches(in: repository, includeRemote: false)
+
+        let activeFeatures = branches
+            .filter { config.isFeatureBranch($0.name) }
+            .map { $0.name }
+
+        let activeReleases = branches
+            .filter { config.isReleaseBranch($0.name) }
+            .map { $0.name }
+
+        let activeHotfixes = branches
+            .filter { config.isHotfixBranch($0.name) }
+            .map { $0.name }
+
+        return GitFlowState(
+            isInitialized: true,
+            config: config,
+            activeFeatures: activeFeatures,
+            activeReleases: activeReleases,
+            activeHotfixes: activeHotfixes
+        )
+    }
+
+    // MARK: - Reflog Operations
+
+    /// Gets reflog entries for HEAD.
+    /// - Parameters:
+    ///   - repository: The repository.
+    ///   - limit: Maximum number of entries to retrieve (default 100).
+    /// - Returns: Array of reflog entries.
+    func getReflog(in repository: Repository, limit: Int = 100) async throws -> [ReflogEntry] {
+        let command = ReflogCommand(limit: limit)
+        let output = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+        return try command.parse(output: output)
+    }
+
+    /// Gets reflog entries for a specific ref (branch, tag, etc.).
+    /// - Parameters:
+    ///   - ref: The ref to get reflog for (e.g., "main", "feature/x").
+    ///   - repository: The repository.
+    ///   - limit: Maximum number of entries to retrieve (default 100).
+    /// - Returns: Array of reflog entries.
+    func getReflog(for ref: String, in repository: Repository, limit: Int = 100) async throws -> [ReflogEntry] {
+        let command = ReflogCommand(limit: limit, ref: ref)
+        let output = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+        return try command.parse(output: output)
+    }
+
+    /// Gets reflog entries for a specific branch.
+    /// - Parameters:
+    ///   - branchName: The branch name.
+    ///   - repository: The repository.
+    ///   - limit: Maximum number of entries to retrieve (default 100).
+    /// - Returns: Array of reflog entries for the branch.
+    func getBranchReflog(branchName: String, in repository: Repository, limit: Int = 100) async throws -> [ReflogEntry] {
+        let command = BranchReflogCommand(branchName: branchName, limit: limit)
+        let output = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+        return try command.parse(output: output)
+    }
+
+    /// Checks out a commit from the reflog.
+    /// - Parameters:
+    ///   - entry: The reflog entry to checkout.
+    ///   - repository: The repository.
+    func checkoutReflogEntry(_ entry: ReflogEntry, in repository: Repository) async throws {
+        let command = CheckoutCommand(branchName: entry.hash)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Creates a new branch from a reflog entry.
+    /// - Parameters:
+    ///   - name: The name for the new branch.
+    ///   - entry: The reflog entry to branch from.
+    ///   - repository: The repository.
+    func createBranchFromReflogEntry(name: String, entry: ReflogEntry, in repository: Repository) async throws {
+        let command = CreateBranchCommand(branchName: name, startPoint: entry.hash)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
     // MARK: - Stash Operations
 
     /// Gets all stashes.
@@ -1116,6 +1394,85 @@ actor GitService {
         )
     }
 
+    /// Gets the list of files in a stash.
+    /// - Parameters:
+    ///   - stashRef: The stash reference.
+    ///   - repository: The repository.
+    /// - Returns: List of file paths in the stash.
+    func getStashFiles(_ stashRef: String = "stash@{0}", in repository: Repository) async throws -> [String] {
+        let command = StashShowFilesCommand(stashRef: stashRef)
+        let output = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+        return try command.parse(output: output)
+    }
+
+    /// Gets the stash contents as a patch.
+    /// - Parameters:
+    ///   - stashRef: The stash reference.
+    ///   - repository: The repository.
+    /// - Returns: The patch content.
+    func getStashPatch(_ stashRef: String = "stash@{0}", in repository: Repository) async throws -> String {
+        let command = StashShowPatchCommand(stashRef: stashRef)
+        let output = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+        return try command.parse(output: output)
+    }
+
+    /// Creates a branch from a stash.
+    /// - Parameters:
+    ///   - branchName: The name for the new branch.
+    ///   - stashRef: The stash reference.
+    ///   - repository: The repository.
+    func createBranchFromStash(branchName: String, stashRef: String = "stash@{0}", in repository: Repository) async throws {
+        let command = StashBranchCommand(branchName: branchName, stashRef: stashRef)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Stashes only specific paths.
+    /// - Parameters:
+    ///   - paths: The paths to stash.
+    ///   - message: Optional stash message.
+    ///   - keepIndex: Whether to keep the index intact.
+    ///   - repository: The repository.
+    func stashPaths(_ paths: [String], message: String? = nil, keepIndex: Bool = false, in repository: Repository) async throws {
+        let command = StashPushPathsCommand(paths: paths, message: message, keepIndex: keepIndex)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Stashes only staged changes.
+    /// - Parameters:
+    ///   - message: Optional stash message.
+    ///   - repository: The repository.
+    func stashStaged(message: String? = nil, in repository: Repository) async throws {
+        let command = StashStagedCommand(message: message)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Applies a stash preserving the staging state.
+    /// - Parameters:
+    ///   - stashRef: The stash reference.
+    ///   - repository: The repository.
+    func applyStashWithIndex(_ stashRef: String = "stash@{0}", in repository: Repository) async throws {
+        let command = ApplyStashKeepIndexCommand(stashRef: stashRef)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
     // MARK: - Remote Operations
 
     /// Fetches from all remotes.
@@ -1139,6 +1496,21 @@ actor GitService {
     /// Pushes changes to remote.
     func push(in repository: Repository, remote: String? = nil, branch: String? = nil, setUpstream: Bool = false, force: Bool = false) async throws {
         let command = PushCommand(remote: remote, branch: branch, setUpstream: setUpstream, force: force)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Pushes changes to remote with specific force mode.
+    /// - Parameters:
+    ///   - repository: The repository.
+    ///   - remote: The remote name (defaults to tracking remote).
+    ///   - branch: The branch to push (defaults to current branch).
+    ///   - setUpstream: Whether to set upstream tracking.
+    ///   - forceMode: The force mode to use.
+    func push(in repository: Repository, remote: String? = nil, branch: String? = nil, setUpstream: Bool = false, forceMode: PushForceMode) async throws {
+        let command = PushCommand(remote: remote, branch: branch, setUpstream: setUpstream, forceMode: forceMode)
         _ = try await executor.executeOrThrow(
             arguments: command.arguments,
             workingDirectory: repository.rootURL
@@ -1352,6 +1724,61 @@ actor GitService {
         )
     }
 
+    /// Completely removes a submodule from the repository.
+    /// This performs:
+    /// 1. Deinitialize the submodule
+    /// 2. Remove submodule section from .gitmodules
+    /// 3. Stage .gitmodules changes
+    /// 4. Remove submodule from .git/config
+    /// 5. Remove the cached submodule
+    /// 6. Delete the submodule directory
+    /// - Parameters:
+    ///   - path: The path of the submodule to remove.
+    ///   - name: The name of the submodule (if different from path).
+    ///   - repository: The repository.
+    func removeSubmodule(path: String, name: String? = nil, in repository: Repository) async throws {
+        let submoduleName = name ?? path
+
+        // 1. Deinitialize the submodule
+        try await deinitSubmodule(path: path, force: true, in: repository)
+
+        // 2. Remove from .gitmodules
+        let removeConfigCommand = RemoveSubmoduleConfigCommand(name: submoduleName)
+        _ = try? await executor.execute(
+            arguments: removeConfigCommand.arguments,
+            workingDirectory: repository.rootURL
+        )
+
+        // 3. Stage .gitmodules changes
+        let stageCommand = StageGitmodulesCommand()
+        _ = try? await executor.execute(
+            arguments: stageCommand.arguments,
+            workingDirectory: repository.rootURL
+        )
+
+        // 4. Remove from .git/config
+        let removeGitConfigCommand = RemoveSubmoduleGitConfigCommand(name: submoduleName)
+        _ = try? await executor.execute(
+            arguments: removeGitConfigCommand.arguments,
+            workingDirectory: repository.rootURL
+        )
+
+        // 5. Remove the cached submodule
+        let removeCacheCommand = RemoveSubmoduleCacheCommand(path: path)
+        _ = try await executor.executeOrThrow(
+            arguments: removeCacheCommand.arguments,
+            workingDirectory: repository.rootURL
+        )
+
+        // 6. Delete the submodule directory from .git/modules
+        let modulesPath = repository.rootURL.appendingPathComponent(".git/modules/\(submoduleName)")
+        try? FileManager.default.removeItem(at: modulesPath)
+
+        // 7. Delete the submodule working directory
+        let workingPath = repository.rootURL.appendingPathComponent(path)
+        try? FileManager.default.removeItem(at: workingPath)
+    }
+
     /// Syncs submodule URLs.
     func syncSubmodules(recursive: Bool = true, in repository: Repository) async throws {
         let command = SyncSubmodulesCommand(recursive: recursive)
@@ -1374,6 +1801,450 @@ actor GitService {
     /// Checks out a specific commit in a submodule.
     func checkoutSubmoduleCommit(_ commit: String, path: String, in repository: Repository) async throws {
         let command = CheckoutSubmoduleCommitCommand(submodulePath: path, commit: commit)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    // MARK: - Git LFS Operations
+
+    /// Checks if Git LFS is installed on the system.
+    func isLFSInstalled() async -> Bool {
+        let command = LFSVersionCommand()
+        let tempDir = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+        do {
+            let result = try await executor.execute(
+                arguments: command.arguments,
+                workingDirectory: tempDir
+            )
+            return result.succeeded
+        } catch {
+            return false
+        }
+    }
+
+    /// Gets the Git LFS version.
+    func getLFSVersion() async throws -> String? {
+        let command = LFSVersionCommand()
+        let tempDir = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+        let output = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: tempDir
+        )
+        return try command.parse(output: output)
+    }
+
+    /// Initializes Git LFS in a repository.
+    func initializeLFS(in repository: Repository) async throws {
+        let command = LFSInstallCommand()
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Tracks files with Git LFS using a pattern.
+    func lfsTrack(pattern: String, in repository: Repository) async throws {
+        let command = LFSTrackCommand(pattern: pattern)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Untracks files from Git LFS.
+    func lfsUntrack(pattern: String, in repository: Repository) async throws {
+        let command = LFSUntrackCommand(pattern: pattern)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Gets the list of LFS tracking patterns.
+    func getLFSTrackingPatterns(in repository: Repository) async throws -> [LFSTrackingPattern] {
+        let command = LFSTrackListCommand()
+        let output = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+        return try command.parse(output: output)
+    }
+
+    /// Gets the list of LFS tracked files.
+    func getLFSFiles(in repository: Repository, includeSize: Bool = true) async throws -> [LFSFile] {
+        let command = LFSLsFilesCommand(includeSize: includeSize)
+        let output = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+        return try command.parse(output: output)
+    }
+
+    /// Gets the LFS status for the repository.
+    func getLFSStatus(in repository: Repository) async throws -> [LFSFile] {
+        let command = LFSStatusCommand()
+        let output = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+        return try command.parse(output: output)
+    }
+
+    /// Fetches LFS objects from the remote.
+    func lfsFetch(all: Bool = false, recent: Bool = false, in repository: Repository) async throws {
+        let command = LFSFetchCommand(all: all, recent: recent)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Pulls LFS objects.
+    func lfsPull(in repository: Repository) async throws {
+        let command = LFSPullCommand()
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Pushes LFS objects to the remote.
+    func lfsPush(remote: String = "origin", all: Bool = false, in repository: Repository) async throws {
+        let command = LFSPushCommand(remote: remote, all: all)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Prunes old LFS objects.
+    func lfsPrune(dryRun: Bool = false, verifyRemote: Bool = true, in repository: Repository) async throws -> String {
+        let command = LFSPruneCommand(dryRun: dryRun, verifyRemote: verifyRemote)
+        let output = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+        return try command.parse(output: output)
+    }
+
+    /// Gets LFS environment information.
+    func getLFSEnvironment(in repository: Repository) async throws -> [String: String] {
+        let command = LFSEnvCommand()
+        let output = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+        return try command.parse(output: output)
+    }
+
+    /// Checks if the repository has LFS configured.
+    func hasLFSConfigured(in repository: Repository) async -> Bool {
+        do {
+            let patterns = try await getLFSTrackingPatterns(in: repository)
+            return !patterns.isEmpty
+        } catch {
+            return false
+        }
+    }
+
+    /// Migrates files to LFS.
+    func lfsMigrate(pattern: String, everything: Bool = false, in repository: Repository) async throws {
+        let command = LFSMigrateCommand(pattern: pattern, everything: everything)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    // MARK: - Worktree Operations
+
+    /// Gets all worktrees in the repository.
+    /// - Parameter repository: The repository.
+    /// - Returns: Array of worktrees.
+    func getWorktrees(in repository: Repository) async throws -> [Worktree] {
+        let command = ListWorktreesCommand()
+        let output = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+        return try command.parse(output: output)
+    }
+
+    /// Adds a new worktree.
+    /// - Parameters:
+    ///   - options: The worktree creation options.
+    ///   - repository: The repository.
+    func addWorktree(options: WorktreeCreateOptions, in repository: Repository) async throws {
+        let command = AddWorktreeCommand(options: options)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Removes a worktree.
+    /// - Parameters:
+    ///   - options: The worktree removal options.
+    ///   - repository: The repository.
+    func removeWorktree(options: WorktreeRemoveOptions, in repository: Repository) async throws {
+        let command = RemoveWorktreeCommand(options: options)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Locks a worktree to prevent accidental removal.
+    /// - Parameters:
+    ///   - path: The path of the worktree to lock.
+    ///   - reason: Optional reason for locking.
+    ///   - repository: The repository.
+    func lockWorktree(path: String, reason: String? = nil, in repository: Repository) async throws {
+        let command = LockWorktreeCommand(path: path, reason: reason)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Unlocks a worktree.
+    /// - Parameters:
+    ///   - path: The path of the worktree to unlock.
+    ///   - repository: The repository.
+    func unlockWorktree(path: String, in repository: Repository) async throws {
+        let command = UnlockWorktreeCommand(path: path)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Moves a worktree to a new location.
+    /// - Parameters:
+    ///   - sourcePath: The current path of the worktree.
+    ///   - destinationPath: The new path for the worktree.
+    ///   - force: Whether to force the move.
+    ///   - repository: The repository.
+    func moveWorktree(sourcePath: String, destinationPath: String, force: Bool = false, in repository: Repository) async throws {
+        let command = MoveWorktreeCommand(sourcePath: sourcePath, destinationPath: destinationPath, force: force)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Prunes worktree information for worktrees that no longer exist.
+    /// - Parameters:
+    ///   - dryRun: Whether to only report what would be pruned.
+    ///   - verbose: Whether to include verbose output.
+    ///   - expire: Optional time limit for pruning (e.g., "3.months.ago").
+    ///   - repository: The repository.
+    /// - Returns: Output from the prune operation.
+    func pruneWorktrees(dryRun: Bool = false, verbose: Bool = false, expire: String? = nil, in repository: Repository) async throws -> String {
+        let command = PruneWorktreesCommand(dryRun: dryRun, verbose: verbose, expire: expire)
+        let output = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+        return try command.parse(output: output)
+    }
+
+    /// Repairs worktree administrative files.
+    /// - Parameters:
+    ///   - paths: Optional specific worktree paths to repair.
+    ///   - repository: The repository.
+    /// - Returns: Output from the repair operation.
+    func repairWorktrees(paths: [String]? = nil, in repository: Repository) async throws -> String {
+        let command = RepairWorktreesCommand(paths: paths)
+        let output = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+        return try command.parse(output: output)
+    }
+
+    /// Checks if the repository has any worktrees (beyond the main one).
+    /// - Parameter repository: The repository.
+    /// - Returns: True if there are additional worktrees.
+    func hasWorktrees(in repository: Repository) async -> Bool {
+        do {
+            let worktrees = try await getWorktrees(in: repository)
+            return worktrees.count > 1 // Main worktree is always present
+        } catch {
+            return false
+        }
+    }
+
+    // MARK: - Patch Operations
+
+    /// Generates a patch for a commit range.
+    /// - Parameters:
+    ///   - fromCommit: The starting commit (exclusive).
+    ///   - toCommit: The ending commit (inclusive).
+    ///   - repository: The repository.
+    /// - Returns: The patch content.
+    func getCommitRangePatch(fromCommit: String, toCommit: String, in repository: Repository) async throws -> String {
+        let command = GenerateCommitRangePatchCommand(fromCommit: fromCommit, toCommit: toCommit)
+        let output = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+        return try command.parse(output: output)
+    }
+
+    /// Applies a patch from a file.
+    /// - Parameters:
+    ///   - patchPath: The path to the patch file.
+    ///   - check: If true, only check if the patch applies cleanly.
+    ///   - threeWay: If true, attempt 3-way merge if patch doesn't apply cleanly.
+    ///   - repository: The repository.
+    func applyPatch(from patchPath: String, check: Bool = false, threeWay: Bool = false, in repository: Repository) async throws {
+        let command = ApplyPatchCommand(patchPath: patchPath, check: check, threeWay: threeWay)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Applies a patch from string content.
+    /// - Parameters:
+    ///   - content: The patch content.
+    ///   - check: If true, only check if the patch applies cleanly.
+    ///   - threeWay: If true, attempt 3-way merge if patch doesn't apply cleanly.
+    ///   - repository: The repository.
+    func applyPatch(content: String, check: Bool = false, threeWay: Bool = false, in repository: Repository) async throws {
+        let command = ApplyPatchFromStdinCommand(check: check, threeWay: threeWay)
+        _ = try await executor.executeWithStdinOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL,
+            stdinContent: content
+        )
+    }
+
+    /// Applies an email-formatted patch (from git format-patch).
+    /// - Parameters:
+    ///   - patchPath: The path to the patch file.
+    ///   - threeWay: If true, attempt 3-way merge if patch doesn't apply cleanly.
+    ///   - signOff: If true, add a Signed-off-by line.
+    ///   - repository: The repository.
+    func applyMailPatch(from patchPath: String, threeWay: Bool = false, signOff: Bool = false, in repository: Repository) async throws {
+        let command = ApplyMailPatchCommand(patchPath: patchPath, threeWay: threeWay, signOff: signOff)
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Checks if a patch application is in progress.
+    /// - Parameter repository: The repository.
+    /// - Returns: True if patch application is in progress.
+    func isPatchInProgress(in repository: Repository) -> Bool {
+        let rebaseApplyDir = repository.rootURL.appendingPathComponent(".git/rebase-apply")
+        return FileManager.default.fileExists(atPath: rebaseApplyDir.path)
+    }
+
+    /// Aborts a patch application in progress.
+    /// - Parameter repository: The repository.
+    func abortPatch(in repository: Repository) async throws {
+        let command = AbortPatchCommand()
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Continues applying patches after resolving conflicts.
+    /// - Parameter repository: The repository.
+    func continuePatch(in repository: Repository) async throws {
+        let command = ContinuePatchCommand()
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Skips the current patch and continues with the next one.
+    /// - Parameter repository: The repository.
+    func skipPatch(in repository: Repository) async throws {
+        let command = SkipPatchCommand()
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Saves a patch to a file.
+    /// - Parameters:
+    ///   - content: The patch content.
+    ///   - url: The URL to save the patch to.
+    func savePatch(content: String, to url: URL) throws {
+        try content.write(to: url, atomically: true, encoding: .utf8)
+    }
+
+    /// Loads a patch from a file.
+    /// - Parameter url: The URL to load the patch from.
+    /// - Returns: The patch content.
+    func loadPatch(from url: URL) throws -> String {
+        try String(contentsOf: url, encoding: .utf8)
+    }
+
+    // MARK: - Archive Operations
+
+    /// Exports a commit, branch, or tag as a ZIP archive.
+    /// - Parameters:
+    ///   - ref: The reference to export (commit hash, branch name, tag name).
+    ///   - outputURL: The URL for the output ZIP file.
+    ///   - prefix: Optional prefix directory inside the archive.
+    ///   - repository: The repository.
+    func exportAsZip(ref: String, to outputURL: URL, prefix: String? = nil, in repository: Repository) async throws {
+        let command = ArchiveCommand(
+            ref: ref,
+            outputPath: outputURL.path,
+            prefix: prefix,
+            format: .zip
+        )
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Exports a commit, branch, or tag as a tar archive.
+    /// - Parameters:
+    ///   - ref: The reference to export (commit hash, branch name, tag name).
+    ///   - outputURL: The URL for the output tar file.
+    ///   - prefix: Optional prefix directory inside the archive.
+    ///   - compressed: Whether to compress with gzip.
+    ///   - repository: The repository.
+    func exportAsTar(ref: String, to outputURL: URL, prefix: String? = nil, compressed: Bool = true, in repository: Repository) async throws {
+        let command = ArchiveCommand(
+            ref: ref,
+            outputPath: outputURL.path,
+            prefix: prefix,
+            format: compressed ? .tarGz : .tar
+        )
+        _ = try await executor.executeOrThrow(
+            arguments: command.arguments,
+            workingDirectory: repository.rootURL
+        )
+    }
+
+    /// Exports specific paths from a ref as a ZIP archive.
+    /// - Parameters:
+    ///   - ref: The reference to export from.
+    ///   - paths: The paths to include in the archive.
+    ///   - outputURL: The URL for the output ZIP file.
+    ///   - prefix: Optional prefix directory inside the archive.
+    ///   - repository: The repository.
+    func exportPathsAsZip(ref: String, paths: [String], to outputURL: URL, prefix: String? = nil, in repository: Repository) async throws {
+        let command = ArchivePathsCommand(
+            ref: ref,
+            paths: paths,
+            outputPath: outputURL.path,
+            prefix: prefix
+        )
         _ = try await executor.executeOrThrow(
             arguments: command.arguments,
             workingDirectory: repository.rootURL

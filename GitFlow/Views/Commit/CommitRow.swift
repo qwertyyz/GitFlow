@@ -1,8 +1,21 @@
 import SwiftUI
 
 /// Row displaying a single commit in the history list.
+/// Supports drag and drop for cherry-pick, branch creation, and tag creation.
 struct CommitRow: View {
     let commit: Commit
+
+    /// Whether to enable drag and drop (default true).
+    var enableDrag: Bool = true
+
+    /// Optional callback for commit operations.
+    var onCreateBranch: ((Commit) -> Void)?
+    var onCreateTag: ((Commit) -> Void)?
+    var onCherryPick: ((Commit) -> Void)?
+    var onRevert: ((Commit) -> Void)?
+    var onReset: ((Commit, ResetMode) -> Void)?
+    var onCreatePatch: ((Commit) -> Void)?
+    var onExportZip: ((Commit) -> Void)?
 
     var body: some View {
         HStack(alignment: .top, spacing: DSSpacing.sm) {
@@ -54,7 +67,104 @@ struct CommitRow: View {
             }
         }
         .padding(.vertical, 4)
+        .applyIf(enableDrag) { view in
+            view.draggableCommit(commit)
+        }
+        .contextMenu {
+            // Copy operations
+            Button {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(commit.hash, forType: .string)
+            } label: {
+                Label("Copy Commit Hash", systemImage: "doc.on.doc")
+            }
+
+            Button {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(commit.subject, forType: .string)
+            } label: {
+                Label("Copy Commit Message", systemImage: "doc.on.doc")
+            }
+
+            Divider()
+
+            // Create operations
+            Button {
+                onCreateBranch?(commit)
+            } label: {
+                Label("Create Branch From Here...", systemImage: "arrow.triangle.branch")
+            }
+
+            Button {
+                onCreateTag?(commit)
+            } label: {
+                Label("Create Tag From Here...", systemImage: "tag")
+            }
+
+            Divider()
+
+            // Apply operations
+            Button {
+                onCherryPick?(commit)
+            } label: {
+                Label("Cherry-pick Commit", systemImage: "arrow.right.circle")
+            }
+
+            Button {
+                onRevert?(commit)
+            } label: {
+                Label("Revert Commit", systemImage: "arrow.uturn.backward")
+            }
+
+            Divider()
+
+            // Reset operations
+            Menu {
+                Button("Soft (keep changes staged)") {
+                    onReset?(commit, .soft)
+                }
+                Button("Mixed (keep changes unstaged)") {
+                    onReset?(commit, .mixed)
+                }
+                Button("Hard (discard all changes)") {
+                    onReset?(commit, .hard)
+                }
+            } label: {
+                Label("Reset to This Commit", systemImage: "arrow.counterclockwise")
+            }
+
+            Divider()
+
+            // Export operations
+            Button {
+                onCreatePatch?(commit)
+            } label: {
+                Label("Create Patch...", systemImage: "doc.badge.plus")
+            }
+
+            Button {
+                onExportZip?(commit)
+            } label: {
+                Label("Export as ZIP...", systemImage: "arrow.down.doc")
+            }
+
+            Divider()
+
+            // Show file history for this commit
+            Button {
+                // Show commit in detailed view
+            } label: {
+                Label("Show Commit Details", systemImage: "info.circle")
+            }
+        }
     }
+}
+
+/// Reset modes for git reset operations.
+enum ResetMode: String {
+    case soft = "--soft"
+    case mixed = "--mixed"
+    case hard = "--hard"
 }
 
 /// Compact commit row for inline display.

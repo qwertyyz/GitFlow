@@ -192,14 +192,12 @@ final class MergeConflictViewModel: ObservableObject {
         let lines = mergedContent.components(separatedBy: "\n")
         var newLines: [String] = []
         var skipUntilEnd = false
-        var skipStartLine = 0
 
         for (index, line) in lines.enumerated() {
             let lineNumber = index + 1
 
             if lineNumber == section.startLine && line.hasPrefix("<<<<<<<") {
                 skipUntilEnd = true
-                skipStartLine = lineNumber
                 // Insert the resolved content
                 newLines.append(contentsOf: resolvedContent.components(separatedBy: "\n"))
             } else if skipUntilEnd && line.hasPrefix(">>>>>>>") && lineNumber == section.endLine {

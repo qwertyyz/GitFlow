@@ -8,8 +8,11 @@ struct FileStatusList: View {
     @State private var fileToDiscard: FileStatus?
     @State private var showDiscardAllConfirmation: Bool = false
 
+    // Local selection state to avoid "Publishing changes from within view updates" warning
+    @State private var localSelectedFile: FileStatus?
+
     var body: some View {
-        List(selection: $viewModel.selectedFile) {
+        List(selection: $localSelectedFile) {
             // Staged files
             if !viewModel.status.stagedFiles.isEmpty {
                 Section {
@@ -133,6 +136,12 @@ struct FileStatusList: View {
             }
         }
         .listStyle(.inset)
+        .onChange(of: localSelectedFile) { newValue in
+            // Defer sync to view model to avoid "Publishing changes from within view updates"
+            Task { @MainActor in
+                viewModel.selectedFile = newValue
+            }
+        }
         // Confirmation dialog for discarding single file
         .confirmationDialog(
             "Discard Changes",

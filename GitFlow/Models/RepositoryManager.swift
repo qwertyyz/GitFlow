@@ -1,5 +1,8 @@
 import Foundation
 
+/// Type alias for RepositoryManager - references the RepositoryManagerViewModel.
+typealias RepositoryManager = RepositoryManagerViewModel
+
 /// Information about a repository in the manager.
 struct RepositoryInfo: Identifiable, Codable, Equatable {
     let id: UUID

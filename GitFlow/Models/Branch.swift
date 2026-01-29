@@ -29,7 +29,16 @@ struct Branch: Identifiable, Equatable, Hashable {
     /// Number of commits behind upstream.
     let behind: Int
 
+    /// The date of the last commit on this branch.
+    let lastCommitDate: Date?
+
+    /// Whether this branch has been merged into the base branch.
+    let isMerged: Bool
+
     var id: String { refName }
+
+    /// Alias for isCurrent - whether this is the HEAD branch.
+    var isHead: Bool { isCurrent }
 
     /// Creates a local branch.
     static func local(
@@ -38,7 +47,9 @@ struct Branch: Identifiable, Equatable, Hashable {
         isCurrent: Bool = false,
         upstream: String? = nil,
         ahead: Int = 0,
-        behind: Int = 0
+        behind: Int = 0,
+        lastCommitDate: Date? = nil,
+        isMerged: Bool = false
     ) -> Branch {
         Branch(
             refName: "refs/heads/\(name)",
@@ -49,7 +60,9 @@ struct Branch: Identifiable, Equatable, Hashable {
             commitHash: commitHash,
             upstream: upstream,
             ahead: ahead,
-            behind: behind
+            behind: behind,
+            lastCommitDate: lastCommitDate,
+            isMerged: isMerged
         )
     }
 
@@ -57,7 +70,8 @@ struct Branch: Identifiable, Equatable, Hashable {
     static func remote(
         name: String,
         remoteName: String,
-        commitHash: String
+        commitHash: String,
+        lastCommitDate: Date? = nil
     ) -> Branch {
         Branch(
             refName: "refs/remotes/\(remoteName)/\(name)",
@@ -68,7 +82,9 @@ struct Branch: Identifiable, Equatable, Hashable {
             commitHash: commitHash,
             upstream: nil,
             ahead: 0,
-            behind: 0
+            behind: 0,
+            lastCommitDate: lastCommitDate,
+            isMerged: false
         )
     }
 }

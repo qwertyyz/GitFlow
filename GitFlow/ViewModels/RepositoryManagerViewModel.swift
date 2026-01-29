@@ -30,6 +30,15 @@ final class RepositoryManagerViewModel: ObservableObject {
     /// Current error, if any.
     @Published var error: Error?
 
+    /// The current repository based on the active tab.
+    var currentRepository: Repository? {
+        guard let activeId = activeTabId,
+              let tab = tabs.first(where: { $0.id == activeId }) else {
+            return nil
+        }
+        return Repository(rootURL: URL(fileURLWithPath: tab.repositoryInfo.path))
+    }
+
     // MARK: - Private Properties
 
     private let storageKey = "knownRepositories"
@@ -174,49 +183,48 @@ final class RepositoryManagerViewModel: ObservableObject {
         scanProgress = 0
 
         let startTime = Date()
-        var foundPaths: [String] = []
-        var scannedCount = 0
 
-        func scan(_ url: URL, depth: Int) {
-            guard depth <= options.maxDepth else { return }
+        // Run scan on background thread using Task.detached to avoid actor isolation
+        let (foundPaths, scannedCount) = await Task.detached(priority: .userInitiated) {
+            var paths: [String] = []
+            var count = 0
 
-            let fileManager = FileManager.default
+            func scan(_ url: URL, depth: Int) {
+                guard depth <= options.maxDepth else { return }
 
-            // Check if this is a git repository
-            let gitPath = url.appendingPathComponent(".git")
-            if fileManager.fileExists(atPath: gitPath.path) {
-                foundPaths.append(url.path)
-                return // Don't scan inside git repos
+                let fileManager = FileManager.default
+
+                // Check if this is a git repository
+                let gitPath = url.appendingPathComponent(".git")
+                if fileManager.fileExists(atPath: gitPath.path) {
+                    paths.append(url.path)
+                    return // Don't scan inside git repos
+                }
+
+                // Scan subdirectories
+                guard let contents = try? fileManager.contentsOfDirectory(
+                    at: url,
+                    includingPropertiesForKeys: [.isDirectoryKey, .isSymbolicLinkKey],
+                    options: [.skipsHiddenFiles]
+                ) else { return }
+
+                for item in contents {
+                    let resourceValues = try? item.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey])
+                    let isDirectory = resourceValues?.isDirectory ?? false
+                    let isSymlink = resourceValues?.isSymbolicLink ?? false
+
+                    if !isDirectory { continue }
+                    if isSymlink && !options.followSymlinks { continue }
+                    if options.excludedDirectories.contains(item.lastPathComponent) { continue }
+
+                    count += 1
+                    scan(item, depth: depth + 1)
+                }
             }
 
-            // Scan subdirectories
-            guard let contents = try? fileManager.contentsOfDirectory(
-                at: url,
-                includingPropertiesForKeys: [.isDirectoryKey, .isSymbolicLinkKey],
-                options: [.skipsHiddenFiles]
-            ) else { return }
-
-            for item in contents {
-                let resourceValues = try? item.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey])
-                let isDirectory = resourceValues?.isDirectory ?? false
-                let isSymlink = resourceValues?.isSymbolicLink ?? false
-
-                if !isDirectory { continue }
-                if isSymlink && !options.followSymlinks { continue }
-                if options.excludedDirectories.contains(item.lastPathComponent) { continue }
-
-                scannedCount += 1
-                scan(item, depth: depth + 1)
-            }
-        }
-
-        // Run on background thread
-        await withCheckedContinuation { continuation in
-            DispatchQueue.global(qos: .userInitiated).async {
-                scan(directory, depth: 0)
-                continuation.resume()
-            }
-        }
+            scan(directory, depth: 0)
+            return (paths, count)
+        }.value
 
         // Add found repositories
         for path in foundPaths {

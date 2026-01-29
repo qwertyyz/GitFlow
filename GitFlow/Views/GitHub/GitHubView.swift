@@ -209,6 +209,11 @@ private struct GitHubHeader: View {
 private struct PullRequestsListView: View {
     @ObservedObject var viewModel: GitHubViewModel
 
+    @State private var selectedPR: GitHubPullRequest?
+    @State private var showReviewSheet: Bool = false
+    @State private var showMergeConfirmation: Bool = false
+    @State private var showCloseConfirmation: Bool = false
+
     var body: some View {
         Group {
             if viewModel.pullRequests.isEmpty && !viewModel.isLoading {
@@ -218,16 +223,15 @@ private struct PullRequestsListView: View {
                     description: "No \(viewModel.stateFilter.rawValue) pull requests"
                 )
             } else {
-                List(viewModel.pullRequests) { pr in
+                List(viewModel.pullRequests, selection: $selectedPR) { pr in
                     PullRequestRow(pr: pr)
+                        .tag(pr)
                         .contentShape(Rectangle())
                         .onTapGesture {
-                            viewModel.openPullRequestInBrowser(pr)
+                            selectedPR = pr
                         }
                         .contextMenu {
-                            Button("Open in Browser") {
-                                viewModel.openPullRequestInBrowser(pr)
-                            }
+                            prContextMenu(for: pr)
                         }
                 }
                 .listStyle(.inset)
@@ -239,6 +243,124 @@ private struct PullRequestsListView: View {
         .onChange(of: viewModel.stateFilter) { _ in
             Task { await viewModel.loadPullRequests() }
         }
+        .sheet(isPresented: $showReviewSheet) {
+            if let pr = selectedPR {
+                PRReviewSheet(
+                    viewModel: viewModel,
+                    pullRequest: pr,
+                    isPresented: $showReviewSheet
+                )
+            }
+        }
+        .confirmationDialog(
+            "Merge Pull Request",
+            isPresented: $showMergeConfirmation,
+            presenting: selectedPR
+        ) { pr in
+            Button("Merge") {
+                Task { await mergePullRequest(pr) }
+            }
+            Button("Squash and Merge") {
+                Task { await mergePullRequest(pr, method: "squash") }
+            }
+            Button("Rebase and Merge") {
+                Task { await mergePullRequest(pr, method: "rebase") }
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: { pr in
+            Text("How would you like to merge #\(pr.number) into \(pr.base.ref)?")
+        }
+        .confirmationDialog(
+            "Close Pull Request",
+            isPresented: $showCloseConfirmation,
+            presenting: selectedPR
+        ) { pr in
+            Button("Close", role: .destructive) {
+                Task { await closePullRequest(pr) }
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: { pr in
+            Text("Are you sure you want to close #\(pr.number) without merging?")
+        }
+    }
+
+    @ViewBuilder
+    private func prContextMenu(for pr: GitHubPullRequest) -> some View {
+        Button("Open in Browser") {
+            viewModel.openPullRequestInBrowser(pr)
+        }
+
+        Divider()
+
+        if pr.isOpen {
+            Button {
+                selectedPR = pr
+                showReviewSheet = true
+            } label: {
+                Label("Submit Review", systemImage: "checkmark.circle")
+            }
+
+            Divider()
+
+            if pr.mergeable ?? true {
+                Button {
+                    selectedPR = pr
+                    showMergeConfirmation = true
+                } label: {
+                    Label("Merge", systemImage: "arrow.triangle.merge")
+                }
+            }
+
+            Button {
+                selectedPR = pr
+                showCloseConfirmation = true
+            } label: {
+                Label("Close", systemImage: "xmark.circle")
+            }
+        }
+
+        Divider()
+
+        Button {
+            Task { await checkoutPRBranch(pr) }
+        } label: {
+            Label("Checkout Branch", systemImage: "arrow.uturn.right")
+        }
+    }
+
+    private func mergePullRequest(_ pr: GitHubPullRequest, method: String = "merge") async {
+        guard let info = viewModel.remoteInfo else { return }
+        do {
+            _ = try await viewModel.githubService.mergePullRequest(
+                owner: info.owner,
+                repo: info.repo,
+                number: pr.number,
+                mergeMethod: method
+            )
+            await viewModel.refresh()
+        } catch {
+            viewModel.error = error as? GitHubError
+        }
+    }
+
+    private func closePullRequest(_ pr: GitHubPullRequest) async {
+        guard let info = viewModel.remoteInfo else { return }
+        do {
+            _ = try await viewModel.githubService.closePullRequest(
+                owner: info.owner,
+                repo: info.repo,
+                number: pr.number
+            )
+            await viewModel.refresh()
+        } catch {
+            viewModel.error = error as? GitHubError
+        }
+    }
+
+    private func checkoutPRBranch(_ pr: GitHubPullRequest) async {
+        // This would need integration with the branch view model
+        // For now, we'll just fetch and checkout
+        // TODO: Implement proper PR branch checkout
     }
 }
 
@@ -552,26 +674,6 @@ private struct GitHubTokenSheet: View {
         .onAppear {
             tempToken = token
         }
-    }
-}
-
-// MARK: - Color Extension
-
-extension Color {
-    init?(hex: String) {
-        var hexSanitized = hex.trimmingCharacters(in: .whitespacesAndNewlines)
-        hexSanitized = hexSanitized.replacingOccurrences(of: "#", with: "")
-
-        var rgb: UInt64 = 0
-        guard Scanner(string: hexSanitized).scanHexInt64(&rgb) else {
-            return nil
-        }
-
-        let r = Double((rgb & 0xFF0000) >> 16) / 255.0
-        let g = Double((rgb & 0x00FF00) >> 8) / 255.0
-        let b = Double(rgb & 0x0000FF) / 255.0
-
-        self.init(red: r, green: g, blue: b)
     }
 }
 

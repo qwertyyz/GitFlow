@@ -374,3 +374,150 @@ struct GenerateCommitPatchCommand: GitCommand {
         output
     }
 }
+
+/// Command to generate patches for a range of commits.
+struct GenerateCommitRangePatchCommand: GitCommand {
+    typealias Result = String
+
+    let fromCommit: String
+    let toCommit: String
+
+    var arguments: [String] {
+        ["format-patch", "--stdout", "\(fromCommit)..\(toCommit)"]
+    }
+
+    func parse(output: String) throws -> String {
+        output
+    }
+}
+
+/// Command to apply a patch.
+struct ApplyPatchCommand: GitCommand {
+    typealias Result = Bool
+
+    let patchPath: String
+    let check: Bool
+    let threeWay: Bool
+
+    init(patchPath: String, check: Bool = false, threeWay: Bool = false) {
+        self.patchPath = patchPath
+        self.check = check
+        self.threeWay = threeWay
+    }
+
+    var arguments: [String] {
+        var args = ["apply"]
+        if check {
+            args.append("--check")
+        }
+        if threeWay {
+            args.append("--3way")
+        }
+        args.append(patchPath)
+        return args
+    }
+
+    func parse(output: String) throws -> Bool {
+        // Apply succeeds if there's no error message
+        !output.contains("error:")
+    }
+}
+
+/// Command to apply a patch from standard input.
+struct ApplyPatchFromStdinCommand: GitCommand {
+    typealias Result = Bool
+
+    let check: Bool
+    let threeWay: Bool
+
+    init(check: Bool = false, threeWay: Bool = false) {
+        self.check = check
+        self.threeWay = threeWay
+    }
+
+    var arguments: [String] {
+        var args = ["apply"]
+        if check {
+            args.append("--check")
+        }
+        if threeWay {
+            args.append("--3way")
+        }
+        args.append("-")
+        return args
+    }
+
+    func parse(output: String) throws -> Bool {
+        !output.contains("error:")
+    }
+}
+
+/// Command to apply patches using git am (for email-formatted patches).
+struct ApplyMailPatchCommand: GitCommand {
+    typealias Result = Bool
+
+    let patchPath: String
+    let threeWay: Bool
+    let signOff: Bool
+
+    init(patchPath: String, threeWay: Bool = false, signOff: Bool = false) {
+        self.patchPath = patchPath
+        self.threeWay = threeWay
+        self.signOff = signOff
+    }
+
+    var arguments: [String] {
+        var args = ["am"]
+        if threeWay {
+            args.append("--3way")
+        }
+        if signOff {
+            args.append("--signoff")
+        }
+        args.append(patchPath)
+        return args
+    }
+
+    func parse(output: String) throws -> Bool {
+        !output.contains("error:") && !output.contains("fatal:")
+    }
+}
+
+/// Command to abort a patch application in progress.
+struct AbortPatchCommand: GitCommand {
+    typealias Result = Bool
+
+    var arguments: [String] {
+        ["am", "--abort"]
+    }
+
+    func parse(output: String) throws -> Bool {
+        true
+    }
+}
+
+/// Command to continue applying patches after resolving conflicts.
+struct ContinuePatchCommand: GitCommand {
+    typealias Result = Bool
+
+    var arguments: [String] {
+        ["am", "--continue"]
+    }
+
+    func parse(output: String) throws -> Bool {
+        !output.contains("error:") && !output.contains("fatal:")
+    }
+}
+
+/// Command to skip the current patch.
+struct SkipPatchCommand: GitCommand {
+    typealias Result = Bool
+
+    var arguments: [String] {
+        ["am", "--skip"]
+    }
+
+    func parse(output: String) throws -> Bool {
+        true
+    }
+}

@@ -174,6 +174,40 @@ struct CheckoutSubmoduleCommitCommand: VoidGitCommand {
     }
 }
 
+/// Command to remove a submodule entry from .gitmodules.
+struct RemoveSubmoduleConfigCommand: VoidGitCommand {
+    let name: String
+
+    var arguments: [String] {
+        ["config", "--file", ".gitmodules", "--remove-section", "submodule.\(name)"]
+    }
+}
+
+/// Command to remove a submodule entry from .git/config.
+struct RemoveSubmoduleGitConfigCommand: VoidGitCommand {
+    let name: String
+
+    var arguments: [String] {
+        ["config", "--remove-section", "submodule.\(name)"]
+    }
+}
+
+/// Command to remove cached submodule.
+struct RemoveSubmoduleCacheCommand: VoidGitCommand {
+    let path: String
+
+    var arguments: [String] {
+        ["rm", "--cached", path]
+    }
+}
+
+/// Command to stage .gitmodules changes.
+struct StageGitmodulesCommand: VoidGitCommand {
+    var arguments: [String] {
+        ["add", ".gitmodules"]
+    }
+}
+
 // MARK: - Parser
 
 /// Parser for submodule-related git output.
@@ -200,7 +234,7 @@ enum SubmoduleParser {
             guard parts.count >= 2 else { continue }
 
             let commitHash = String(parts[0])
-            var pathAndDescribe = String(parts[1])
+            let pathAndDescribe = String(parts[1])
 
             // Extract describe if present
             var path = pathAndDescribe

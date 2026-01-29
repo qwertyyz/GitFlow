@@ -79,22 +79,26 @@ actor GitExecutor {
         let stderrHandle = stderrPipe.fileHandleForReading
 
         // Read both pipes concurrently to prevent deadlock
-        let readGroup = DispatchGroup()
+        // Use async/await compatible approach to avoid Swift 6 warnings
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            let readGroup = DispatchGroup()
 
-        readGroup.enter()
-        DispatchQueue.global(qos: .userInitiated).async {
-            stdoutData = stdoutHandle.readDataToEndOfFile()
-            readGroup.leave()
+            readGroup.enter()
+            DispatchQueue.global(qos: .userInitiated).async {
+                stdoutData = stdoutHandle.readDataToEndOfFile()
+                readGroup.leave()
+            }
+
+            readGroup.enter()
+            DispatchQueue.global(qos: .userInitiated).async {
+                stderrData = stderrHandle.readDataToEndOfFile()
+                readGroup.leave()
+            }
+
+            readGroup.notify(queue: .global(qos: .userInitiated)) {
+                continuation.resume()
+            }
         }
-
-        readGroup.enter()
-        DispatchQueue.global(qos: .userInitiated).async {
-            stderrData = stderrHandle.readDataToEndOfFile()
-            readGroup.leave()
-        }
-
-        // Wait for reads to complete
-        readGroup.wait()
 
         // Now wait for process to exit (should be immediate since pipes are drained)
         process.waitUntilExit()
@@ -165,21 +169,27 @@ actor GitExecutor {
         let stdoutHandle = stdoutPipe.fileHandleForReading
         let stderrHandle = stderrPipe.fileHandleForReading
 
-        let readGroup = DispatchGroup()
+        // Use async/await compatible approach to avoid Swift 6 warnings
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            let readGroup = DispatchGroup()
 
-        readGroup.enter()
-        DispatchQueue.global(qos: .userInitiated).async {
-            stdoutData = stdoutHandle.readDataToEndOfFile()
-            readGroup.leave()
+            readGroup.enter()
+            DispatchQueue.global(qos: .userInitiated).async {
+                stdoutData = stdoutHandle.readDataToEndOfFile()
+                readGroup.leave()
+            }
+
+            readGroup.enter()
+            DispatchQueue.global(qos: .userInitiated).async {
+                stderrData = stderrHandle.readDataToEndOfFile()
+                readGroup.leave()
+            }
+
+            readGroup.notify(queue: .global(qos: .userInitiated)) {
+                continuation.resume()
+            }
         }
 
-        readGroup.enter()
-        DispatchQueue.global(qos: .userInitiated).async {
-            stderrData = stderrHandle.readDataToEndOfFile()
-            readGroup.leave()
-        }
-
-        readGroup.wait()
         process.waitUntilExit()
         timeoutTask.cancel()
 
@@ -297,21 +307,27 @@ actor GitExecutor {
         let stdoutHandle = stdoutPipe.fileHandleForReading
         let stderrHandle = stderrPipe.fileHandleForReading
 
-        let readGroup = DispatchGroup()
+        // Use async/await compatible approach to avoid Swift 6 warnings
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            let readGroup = DispatchGroup()
 
-        readGroup.enter()
-        DispatchQueue.global(qos: .userInitiated).async {
-            stdoutData = stdoutHandle.readDataToEndOfFile()
-            readGroup.leave()
+            readGroup.enter()
+            DispatchQueue.global(qos: .userInitiated).async {
+                stdoutData = stdoutHandle.readDataToEndOfFile()
+                readGroup.leave()
+            }
+
+            readGroup.enter()
+            DispatchQueue.global(qos: .userInitiated).async {
+                stderrData = stderrHandle.readDataToEndOfFile()
+                readGroup.leave()
+            }
+
+            readGroup.notify(queue: .global(qos: .userInitiated)) {
+                continuation.resume()
+            }
         }
 
-        readGroup.enter()
-        DispatchQueue.global(qos: .userInitiated).async {
-            stderrData = stderrHandle.readDataToEndOfFile()
-            readGroup.leave()
-        }
-
-        readGroup.wait()
         process.waitUntilExit()
         timeoutTask.cancel()
 

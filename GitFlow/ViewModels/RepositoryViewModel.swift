@@ -128,6 +128,13 @@ final class RepositoryViewModel: ObservableObject {
         await refresh()
     }
 
+    /// Pops the most recent stash.
+    func popStash() async {
+        guard let stash = stashViewModel.stashes.first else { return }
+        await stashViewModel.popStash(stash)
+        await refresh()
+    }
+
     /// Creates a commit with the staged changes.
     func createCommit(message: String) async {
         await commitViewModel.createCommit(message: message)
@@ -144,28 +151,35 @@ final class RepositoryViewModel: ObservableObject {
 
     private func setupBindings() {
         // Propagate status changes to diff view model when a file is selected
+        // Use dropFirst to skip initial value, then debounce to avoid view update conflicts
         statusViewModel.$selectedFile
+            .dropFirst()
+            .debounce(for: .milliseconds(10), scheduler: DispatchQueue.main)
             .compactMap { $0 }
             .sink { [weak self] fileStatus in
-                Task {
-                    await self?.diffViewModel.loadDiff(for: fileStatus)
+                guard let self = self else { return }
+                Task { @MainActor in
+                    await self.diffViewModel.loadDiff(for: fileStatus)
                 }
             }
             .store(in: &cancellables)
 
         // Propagate commit success to trigger refresh
         commitViewModel.$lastCommitSucceeded
+            .dropFirst()
+            .debounce(for: .milliseconds(10), scheduler: DispatchQueue.main)
             .filter { $0 }
             .sink { [weak self] _ in
-                Task {
-                    await self?.refresh()
+                guard let self = self else { return }
+                Task { @MainActor in
+                    await self.refresh()
                 }
             }
             .store(in: &cancellables)
 
         // Refresh status when hunk staging changes
         diffViewModel.onStatusChanged = { [weak self] in
-            Task {
+            Task { @MainActor in
                 await self?.statusViewModel.refresh()
             }
         }

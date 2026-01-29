@@ -134,8 +134,12 @@ struct StashListView: View {
 }
 
 /// Row displaying a single stash.
+/// Supports drag and drop for applying stashes.
 struct StashRow: View {
     let stash: Stash
+
+    /// Whether to enable drag and drop (default true).
+    var enableDrag: Bool = true
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -162,6 +166,9 @@ struct StashRow: View {
                 .lineLimit(2)
         }
         .padding(.vertical, 4)
+        .applyIf(enableDrag) { view in
+            view.draggableStash(stash)
+        }
     }
 }
 

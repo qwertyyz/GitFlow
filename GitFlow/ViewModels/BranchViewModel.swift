@@ -429,4 +429,80 @@ final class BranchViewModel: ObservableObject {
         }
         return nil
     }
+
+    /// Number of commits the current branch is ahead of upstream.
+    var currentBranchAhead: Int {
+        currentBranch?.ahead ?? 0
+    }
+
+    /// Number of commits the current branch is behind upstream.
+    var currentBranchBehind: Int {
+        currentBranch?.behind ?? 0
+    }
+
+    // MARK: - Branch Review Properties
+
+    /// Branches that haven't been updated recently (stale).
+    var staleBranches: [Branch] {
+        let staleDays: TimeInterval = 30 * 24 * 60 * 60 // 30 days
+        let staleDate = Date().addingTimeInterval(-staleDays)
+
+        return localBranches.filter { branch in
+            guard let lastCommitDate = branch.lastCommitDate else { return false }
+            return lastCommitDate < staleDate && !branch.isCurrent
+        }
+    }
+
+    /// Branches that have been merged into the main branch.
+    var mergedBranches: [Branch] {
+        // This would require checking merge status
+        // For now, return empty - would be populated after checking git branch --merged
+        return localBranches.filter { $0.isMerged && !$0.isCurrent }
+    }
+
+    /// Archived branches (stored locally, hidden from main list).
+    @Published private(set) var archivedBranches: [Branch] = []
+
+    // MARK: - Archive Operations
+
+    /// Archives a branch (hides it from the main list).
+    func archiveBranch(_ branchName: String) async {
+        guard let branch = localBranches.first(where: { $0.name == branchName }) else { return }
+
+        // Store in archived list
+        archivedBranches.append(branch)
+
+        // Persist to UserDefaults
+        saveArchivedBranches()
+    }
+
+    /// Unarchives a branch (restores it to the main list).
+    func unarchiveBranch(_ branchName: String) async {
+        archivedBranches.removeAll { $0.name == branchName }
+
+        // Persist to UserDefaults
+        saveArchivedBranches()
+    }
+
+    /// Loads archived branches from UserDefaults.
+    func loadArchivedBranches() {
+        if let data = UserDefaults.standard.data(forKey: "archivedBranches.\(repository.path)"),
+           let names = try? JSONDecoder().decode([String].self, from: data) {
+            archivedBranches = localBranches.filter { names.contains($0.name) }
+        }
+    }
+
+    /// Saves archived branches to UserDefaults.
+    private func saveArchivedBranches() {
+        let names = archivedBranches.map { $0.name }
+        if let data = try? JSONEncoder().encode(names) {
+            UserDefaults.standard.set(data, forKey: "archivedBranches.\(repository.path)")
+        }
+    }
+
+    /// Branches excluding archived ones.
+    var visibleLocalBranches: [Branch] {
+        let archivedNames = Set(archivedBranches.map { $0.name })
+        return localBranches.filter { !archivedNames.contains($0.name) }
+    }
 }

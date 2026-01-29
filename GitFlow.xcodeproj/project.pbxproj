@@ -34,6 +34,17 @@
 		MODEL020 /* MergeConflict.swift in Sources */ = {isa = PBXBuildFile; fileRef = MODELFILE020 /* MergeConflict.swift */; };
 		MODEL021 /* RepositoryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = MODELFILE021 /* RepositoryManager.swift */; };
 		MODEL022 /* Submodule.swift in Sources */ = {isa = PBXBuildFile; fileRef = MODELFILE022 /* Submodule.swift */; };
+		MODEL023 /* GitFlowConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = MODELFILE023 /* GitFlowConfig.swift */; };
+		MODEL024 /* ReflogEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = MODELFILE024 /* ReflogEntry.swift */; };
+		MODEL025 /* Worktree.swift in Sources */ = {isa = PBXBuildFile; fileRef = MODELFILE025 /* Worktree.swift */; };
+		MODEL026 /* LFSFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = MODELFILE026 /* LFSFile.swift */; };
+		MODEL027 /* ArchivedBranch.swift in Sources */ = {isa = PBXBuildFile; fileRef = MODELFILE027 /* ArchivedBranch.swift */; };
+		MODEL028 /* Bitbucket.swift in Sources */ = {isa = PBXBuildFile; fileRef = MODELFILE028 /* Bitbucket.swift */; };
+		MODEL029 /* CommitTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = MODELFILE029 /* CommitTemplate.swift */; };
+		MODEL030 /* ExternalTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = MODELFILE030 /* ExternalTool.swift */; };
+		MODEL031 /* GitLab.swift in Sources */ = {isa = PBXBuildFile; fileRef = MODELFILE031 /* GitLab.swift */; };
+		MODEL032 /* Gitmoji.swift in Sources */ = {isa = PBXBuildFile; fileRef = MODELFILE032 /* Gitmoji.swift */; };
+		MODEL033 /* SSHKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = MODELFILE033 /* SSHKey.swift */; };
 
 		/* Services */
 		SVC001 /* GitExecutor.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVCFILE001 /* GitExecutor.swift */; };
@@ -63,6 +74,18 @@
 		SVC025 /* GitHubService.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVCFILE025 /* GitHubService.swift */; };
 		SVC026 /* GitHubDeviceAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVCFILE026 /* GitHubDeviceAuth.swift */; };
 		SVC027 /* GitHubOAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVCFILE027 /* GitHubOAuth.swift */; };
+		SVC028 /* ReflogCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVCFILE028 /* ReflogCommand.swift */; };
+		SVC029 /* GitFlowCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVCFILE029 /* GitFlowCommand.swift */; };
+		SVC030 /* LFSCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVCFILE030 /* LFSCommand.swift */; };
+		SVC031 /* WorktreeCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVCFILE031 /* WorktreeCommand.swift */; };
+		SVC032 /* ArchiveCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVCFILE032 /* ArchiveCommand.swift */; };
+		SVC033 /* StashAdvancedCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVCFILE033 /* StashAdvancedCommand.swift */; };
+		SVC034 /* TreeCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVCFILE034 /* TreeCommand.swift */; };
+		SVC035 /* ReflogParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVCFILE035 /* ReflogParser.swift */; };
+		SVC036 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVCFILE036 /* KeychainService.swift */; };
+		SVC037 /* RepositoryGroupStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVCFILE037 /* RepositoryGroupStore.swift */; };
+		SVC038 /* ArchivedBranchStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVCFILE038 /* ArchivedBranchStore.swift */; };
+		SVC039 /* CommitTemplateStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVCFILE039 /* CommitTemplateStore.swift */; };
 
 		/* ViewModels */
 		VM001 /* RepositoryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = VMFILE001 /* RepositoryViewModel.swift */; };
@@ -83,6 +106,8 @@
 		VM016 /* MergeConflictViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = VMFILE016 /* MergeConflictViewModel.swift */; };
 		VM017 /* RepositoryManagerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = VMFILE017 /* RepositoryManagerViewModel.swift */; };
 		VM018 /* SubmoduleViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = VMFILE018 /* SubmoduleViewModel.swift */; };
+		VM022 /* PatchViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = VMFILE022 /* PatchViewModel.swift */; };
+		VM023 /* GitFlowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = VMFILE023 /* GitFlowViewModel.swift */; };
 
 		/* Views */
 		VIEW001 /* MainWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE001 /* MainWindow.swift */; };
@@ -130,6 +155,38 @@
 		VIEW043 /* ConfigView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE043 /* ConfigView.swift */; };
 		VIEW044 /* SpellCheckTextEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE044 /* SpellCheckTextEditor.swift */; };
 		VIEW045 /* SubmoduleListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE045 /* SubmoduleListView.swift */; };
+		VIEW046 /* PRDiffView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE046 /* PRDiffView.swift */; };
+		VIEW047 /* ReflogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE047 /* ReflogView.swift */; };
+		VIEW048 /* WorktreeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE048 /* WorktreeView.swift */; };
+		VIEW049 /* GitFlowInitSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE049 /* GitFlowInitSheet.swift */; };
+		VIEW050 /* GitFlowMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE050 /* GitFlowMenu.swift */; };
+		VIEW051 /* CreatePullRequestSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE051 /* CreatePullRequestSheet.swift */; };
+		VIEW052 /* PRCommentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE052 /* PRCommentView.swift */; };
+		VIEW053 /* PRReviewSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE053 /* PRReviewSheet.swift */; };
+		VIEW054 /* ImageDiffView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE054 /* ImageDiffView.swift */; };
+		VIEW055 /* CommitTreeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE055 /* CommitTreeView.swift */; };
+		VIEW056 /* GitmojiPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE056 /* GitmojiPickerView.swift */; };
+		VIEW057 /* BranchReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE057 /* BranchReviewView.swift */; };
+		VIEW058 /* StackedBranchesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE058 /* StackedBranchesView.swift */; };
+		VIEW059 /* TabWindowManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE059 /* TabWindowManager.swift */; };
+		VIEW060 /* MenuBarManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE060 /* MenuBarManager.swift */; };
+		VIEW061 /* PatchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE061 /* PatchView.swift */; };
+		VIEW062 /* CreateRemoteRepositoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE062 /* CreateRemoteRepositoryView.swift */; };
+		VIEW063 /* DeleteRepositoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE063 /* DeleteRepositoryView.swift */; };
+		VIEW064 /* RepositoryInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE064 /* RepositoryInfoView.swift */; };
+		VIEW065 /* AppearanceSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE065 /* AppearanceSettingsView.swift */; };
+		VIEW066 /* CLIToolInstallerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE066 /* CLIToolInstallerView.swift */; };
+		VIEW067 /* CommitTemplatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE067 /* CommitTemplatesView.swift */; };
+		VIEW068 /* GettingStartedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE068 /* GettingStartedView.swift */; };
+		VIEW069 /* HelpDocumentationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE069 /* HelpDocumentationView.swift */; };
+		VIEW070 /* KeyboardShortcutsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE070 /* KeyboardShortcutsView.swift */; };
+		VIEW071 /* LearningResourcesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE071 /* LearningResourcesView.swift */; };
+		VIEW072 /* WhatsNewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE072 /* WhatsNewView.swift */; };
+		VIEW073 /* BitbucketView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE073 /* BitbucketView.swift */; };
+		VIEW074 /* GitLabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE074 /* GitLabView.swift */; };
+		VIEW075 /* GiteaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE075 /* GiteaView.swift */; };
+		VIEW076 /* AzureDevOpsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE076 /* AzureDevOpsView.swift */; };
+		VIEW077 /* BeanstalkView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE077 /* BeanstalkView.swift */; };
 
 		/* Utilities */
 		UTIL001 /* String+Git.swift in Sources */ = {isa = PBXBuildFile; fileRef = UTILFILE001 /* String+Git.swift */; };
@@ -138,9 +195,45 @@
 		UTIL004 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = UTILFILE004 /* DesignSystem.swift */; };
 		UTIL005 /* KeyboardShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = UTILFILE005 /* KeyboardShortcuts.swift */; };
 		UTIL006 /* WordDiff.swift in Sources */ = {isa = PBXBuildFile; fileRef = UTILFILE006 /* WordDiff.swift */; };
+		UTIL007 /* AdvancedDragDropHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = UTILFILE007 /* AdvancedDragDropHandler.swift */; };
+		UTIL008 /* DragDropCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = UTILFILE008 /* DragDropCoordinator.swift */; };
+		UTIL009 /* NavigationHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = UTILFILE009 /* NavigationHistory.swift */; };
+		UTIL010 /* View+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = UTILFILE010 /* View+Extensions.swift */; };
 
 		/* Resources */
 		RES001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = RESFILE001 /* Assets.xcassets */; };
+		ADD200 /* AutoStashService.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDFILE200 /* AutoStashService.swift */; };
+		ADD201 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDFILE201 /* NotificationService.swift */; };
+		ADD202 /* SpotlightService.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDFILE202 /* SpotlightService.swift */; };
+		ADD203 /* GitSVNService.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDFILE203 /* GitSVNService.swift */; };
+		ADD204 /* BitbucketViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDFILE204 /* BitbucketViewModel.swift */; };
+		ADD205 /* BranchReviewViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDFILE205 /* BranchReviewViewModel.swift */; };
+		ADD206 /* GitLabViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDFILE206 /* GitLabViewModel.swift */; };
+		ADD207 /* ReflogViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDFILE207 /* ReflogViewModel.swift */; };
+		ADD208 /* WorktreeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDFILE208 /* WorktreeViewModel.swift */; };
+		ADD209 /* EnvironmentVariablesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDFILE209 /* EnvironmentVariablesView.swift */; };
+		ADD210 /* ExternalToolsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDFILE210 /* ExternalToolsSettingsView.swift */; };
+		ADD211 /* GPGKeysSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDFILE211 /* GPGKeysSettingsView.swift */; };
+		ADD212 /* KeyboardShortcutsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDFILE212 /* KeyboardShortcutsSettingsView.swift */; };
+		ADD213 /* SettingsBackupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDFILE213 /* SettingsBackupView.swift */; };
+		ADD214 /* SSHKeysSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDFILE214 /* SSHKeysSettingsView.swift */; };
+		ADD215 /* SyntaxHighlightingSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDFILE215 /* SyntaxHighlightingSettingsView.swift */; };
+		ADD216 /* SnapshotsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDFILE216 /* SnapshotsView.swift */; };
+		ADD217 /* BitbucketService.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDFILE217 /* BitbucketService.swift */; };
+		ADD218 /* GitLabService.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDFILE218 /* GitLabService.swift */; };
+		ADD219 /* GiteaService.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDFILE219 /* GiteaService.swift */; };
+		ADD220 /* AzureDevOpsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDFILE220 /* AzureDevOpsService.swift */; };
+		ADD221 /* BeanstalkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDFILE221 /* BeanstalkService.swift */; };
+		ADD222 /* ExternalToolService.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDFILE222 /* ExternalToolService.swift */; };
+		ADD223 /* GPGService.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDFILE223 /* GPGService.swift */; };
+		ADD224 /* SSHKeyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDFILE224 /* SSHKeyService.swift */; };
+		ADD225 /* OnePasswordSSHAgent.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDFILE225 /* OnePasswordSSHAgent.swift */; };
+		ADD226 /* HandoffManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDFILE226 /* HandoffManager.swift */; };
+		ADD227 /* GitUndoManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDFILE227 /* GitUndoManager.swift */; };
+		ADD228 /* UndoDiscardService.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDFILE228 /* UndoDiscardService.swift */; };
+		ADD229 /* MultiWindowManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDFILE229 /* MultiWindowManager.swift */; };
+		ADD230 /* SyncButtonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDFILE230 /* SyncButtonView.swift */; };
+		ADD231 /* TouchBarManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDFILE231 /* TouchBarManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -173,6 +266,17 @@
 		MODELFILE020 /* MergeConflict.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MergeConflict.swift; sourceTree = "<group>"; };
 		MODELFILE021 /* RepositoryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepositoryManager.swift; sourceTree = "<group>"; };
 		MODELFILE022 /* Submodule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Submodule.swift; sourceTree = "<group>"; };
+		MODELFILE023 /* GitFlowConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitFlowConfig.swift; sourceTree = "<group>"; };
+		MODELFILE024 /* ReflogEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReflogEntry.swift; sourceTree = "<group>"; };
+		MODELFILE025 /* Worktree.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Worktree.swift; sourceTree = "<group>"; };
+		MODELFILE026 /* LFSFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LFSFile.swift; sourceTree = "<group>"; };
+		MODELFILE027 /* ArchivedBranch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchivedBranch.swift; sourceTree = "<group>"; };
+		MODELFILE028 /* Bitbucket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Bitbucket.swift; sourceTree = "<group>"; };
+		MODELFILE029 /* CommitTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommitTemplate.swift; sourceTree = "<group>"; };
+		MODELFILE030 /* ExternalTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalTool.swift; sourceTree = "<group>"; };
+		MODELFILE031 /* GitLab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitLab.swift; sourceTree = "<group>"; };
+		MODELFILE032 /* Gitmoji.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gitmoji.swift; sourceTree = "<group>"; };
+		MODELFILE033 /* SSHKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHKey.swift; sourceTree = "<group>"; };
 
 		/* Services */
 		SVCFILE001 /* GitExecutor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitExecutor.swift; sourceTree = "<group>"; };
@@ -202,6 +306,18 @@
 		SVCFILE025 /* GitHubService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitHubService.swift; sourceTree = "<group>"; };
 		SVCFILE026 /* GitHubDeviceAuth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitHubDeviceAuth.swift; sourceTree = "<group>"; };
 		SVCFILE027 /* GitHubOAuth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitHubOAuth.swift; sourceTree = "<group>"; };
+		SVCFILE028 /* ReflogCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReflogCommand.swift; sourceTree = "<group>"; };
+		SVCFILE029 /* GitFlowCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitFlowCommand.swift; sourceTree = "<group>"; };
+		SVCFILE030 /* LFSCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LFSCommand.swift; sourceTree = "<group>"; };
+		SVCFILE031 /* WorktreeCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorktreeCommand.swift; sourceTree = "<group>"; };
+		SVCFILE032 /* ArchiveCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveCommand.swift; sourceTree = "<group>"; };
+		SVCFILE033 /* StashAdvancedCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StashAdvancedCommand.swift; sourceTree = "<group>"; };
+		SVCFILE034 /* TreeCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TreeCommand.swift; sourceTree = "<group>"; };
+		SVCFILE035 /* ReflogParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReflogParser.swift; sourceTree = "<group>"; };
+		SVCFILE036 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
+		SVCFILE037 /* RepositoryGroupStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepositoryGroupStore.swift; sourceTree = "<group>"; };
+		SVCFILE038 /* ArchivedBranchStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchivedBranchStore.swift; sourceTree = "<group>"; };
+		SVCFILE039 /* CommitTemplateStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommitTemplateStore.swift; sourceTree = "<group>"; };
 
 		/* ViewModels */
 		VMFILE001 /* RepositoryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepositoryViewModel.swift; sourceTree = "<group>"; };
@@ -222,6 +338,8 @@
 		VMFILE016 /* MergeConflictViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MergeConflictViewModel.swift; sourceTree = "<group>"; };
 		VMFILE017 /* RepositoryManagerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepositoryManagerViewModel.swift; sourceTree = "<group>"; };
 		VMFILE018 /* SubmoduleViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmoduleViewModel.swift; sourceTree = "<group>"; };
+		VMFILE022 /* PatchViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchViewModel.swift; sourceTree = "<group>"; };
+		VMFILE023 /* GitFlowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitFlowViewModel.swift; sourceTree = "<group>"; };
 
 		/* Views */
 		VIEWFILE001 /* MainWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindow.swift; sourceTree = "<group>"; };
@@ -269,6 +387,38 @@
 		VIEWFILE043 /* ConfigView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigView.swift; sourceTree = "<group>"; };
 		VIEWFILE044 /* SpellCheckTextEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpellCheckTextEditor.swift; sourceTree = "<group>"; };
 		VIEWFILE045 /* SubmoduleListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmoduleListView.swift; sourceTree = "<group>"; };
+		VIEWFILE046 /* PRDiffView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PRDiffView.swift; sourceTree = "<group>"; };
+		VIEWFILE047 /* ReflogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReflogView.swift; sourceTree = "<group>"; };
+		VIEWFILE048 /* WorktreeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorktreeView.swift; sourceTree = "<group>"; };
+		VIEWFILE049 /* GitFlowInitSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitFlowInitSheet.swift; sourceTree = "<group>"; };
+		VIEWFILE050 /* GitFlowMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitFlowMenu.swift; sourceTree = "<group>"; };
+		VIEWFILE051 /* CreatePullRequestSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreatePullRequestSheet.swift; sourceTree = "<group>"; };
+		VIEWFILE052 /* PRCommentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PRCommentView.swift; sourceTree = "<group>"; };
+		VIEWFILE053 /* PRReviewSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PRReviewSheet.swift; sourceTree = "<group>"; };
+		VIEWFILE054 /* ImageDiffView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageDiffView.swift; sourceTree = "<group>"; };
+		VIEWFILE055 /* CommitTreeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommitTreeView.swift; sourceTree = "<group>"; };
+		VIEWFILE056 /* GitmojiPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitmojiPickerView.swift; sourceTree = "<group>"; };
+		VIEWFILE057 /* BranchReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BranchReviewView.swift; sourceTree = "<group>"; };
+		VIEWFILE058 /* StackedBranchesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StackedBranchesView.swift; sourceTree = "<group>"; };
+		VIEWFILE059 /* TabWindowManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabWindowManager.swift; sourceTree = "<group>"; };
+		VIEWFILE060 /* MenuBarManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarManager.swift; sourceTree = "<group>"; };
+		VIEWFILE061 /* PatchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchView.swift; sourceTree = "<group>"; };
+		VIEWFILE062 /* CreateRemoteRepositoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateRemoteRepositoryView.swift; sourceTree = "<group>"; };
+		VIEWFILE063 /* DeleteRepositoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeleteRepositoryView.swift; sourceTree = "<group>"; };
+		VIEWFILE064 /* RepositoryInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepositoryInfoView.swift; sourceTree = "<group>"; };
+		VIEWFILE065 /* AppearanceSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppearanceSettingsView.swift; sourceTree = "<group>"; };
+		VIEWFILE066 /* CLIToolInstallerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLIToolInstallerView.swift; sourceTree = "<group>"; };
+		VIEWFILE067 /* CommitTemplatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommitTemplatesView.swift; sourceTree = "<group>"; };
+		VIEWFILE068 /* GettingStartedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GettingStartedView.swift; sourceTree = "<group>"; };
+		VIEWFILE069 /* HelpDocumentationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpDocumentationView.swift; sourceTree = "<group>"; };
+		VIEWFILE070 /* KeyboardShortcutsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardShortcutsView.swift; sourceTree = "<group>"; };
+		VIEWFILE071 /* LearningResourcesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningResourcesView.swift; sourceTree = "<group>"; };
+		VIEWFILE072 /* WhatsNewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhatsNewView.swift; sourceTree = "<group>"; };
+		VIEWFILE073 /* BitbucketView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BitbucketView.swift; sourceTree = "<group>"; };
+		VIEWFILE074 /* GitLabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitLabView.swift; sourceTree = "<group>"; };
+		VIEWFILE075 /* GiteaView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GiteaView.swift; sourceTree = "<group>"; };
+		VIEWFILE076 /* AzureDevOpsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AzureDevOpsView.swift; sourceTree = "<group>"; };
+		VIEWFILE077 /* BeanstalkView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeanstalkView.swift; sourceTree = "<group>"; };
 
 		/* Utilities */
 		UTILFILE001 /* String+Git.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Git.swift"; sourceTree = "<group>"; };
@@ -277,9 +427,45 @@
 		UTILFILE004 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
 		UTILFILE005 /* KeyboardShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardShortcuts.swift; sourceTree = "<group>"; };
 		UTILFILE006 /* WordDiff.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordDiff.swift; sourceTree = "<group>"; };
+		UTILFILE007 /* AdvancedDragDropHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvancedDragDropHandler.swift; sourceTree = "<group>"; };
+		UTILFILE008 /* DragDropCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DragDropCoordinator.swift; sourceTree = "<group>"; };
+		UTILFILE009 /* NavigationHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationHistory.swift; sourceTree = "<group>"; };
+		UTILFILE010 /* View+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+Extensions.swift"; sourceTree = "<group>"; };
 
 		/* Resources */
 		RESFILE001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		ADDFILE200 /* AutoStashService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoStashService.swift; sourceTree = "<group>"; };
+		ADDFILE201 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
+		ADDFILE202 /* SpotlightService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotlightService.swift; sourceTree = "<group>"; };
+		ADDFILE203 /* GitSVNService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitSVNService.swift; sourceTree = "<group>"; };
+		ADDFILE204 /* BitbucketViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BitbucketViewModel.swift; sourceTree = "<group>"; };
+		ADDFILE205 /* BranchReviewViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BranchReviewViewModel.swift; sourceTree = "<group>"; };
+		ADDFILE206 /* GitLabViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitLabViewModel.swift; sourceTree = "<group>"; };
+		ADDFILE207 /* ReflogViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReflogViewModel.swift; sourceTree = "<group>"; };
+		ADDFILE208 /* WorktreeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorktreeViewModel.swift; sourceTree = "<group>"; };
+		ADDFILE209 /* EnvironmentVariablesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnvironmentVariablesView.swift; sourceTree = "<group>"; };
+		ADDFILE210 /* ExternalToolsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalToolsSettingsView.swift; sourceTree = "<group>"; };
+		ADDFILE211 /* GPGKeysSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPGKeysSettingsView.swift; sourceTree = "<group>"; };
+		ADDFILE212 /* KeyboardShortcutsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardShortcutsSettingsView.swift; sourceTree = "<group>"; };
+		ADDFILE213 /* SettingsBackupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsBackupView.swift; sourceTree = "<group>"; };
+		ADDFILE214 /* SSHKeysSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHKeysSettingsView.swift; sourceTree = "<group>"; };
+		ADDFILE215 /* SyntaxHighlightingSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyntaxHighlightingSettingsView.swift; sourceTree = "<group>"; };
+		ADDFILE216 /* SnapshotsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotsView.swift; sourceTree = "<group>"; };
+		ADDFILE217 /* BitbucketService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BitbucketService.swift; sourceTree = "<group>"; };
+		ADDFILE218 /* GitLabService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitLabService.swift; sourceTree = "<group>"; };
+		ADDFILE219 /* GiteaService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GiteaService.swift; sourceTree = "<group>"; };
+		ADDFILE220 /* AzureDevOpsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AzureDevOpsService.swift; sourceTree = "<group>"; };
+		ADDFILE221 /* BeanstalkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeanstalkService.swift; sourceTree = "<group>"; };
+		ADDFILE222 /* ExternalToolService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalToolService.swift; sourceTree = "<group>"; };
+		ADDFILE223 /* GPGService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPGService.swift; sourceTree = "<group>"; };
+		ADDFILE224 /* SSHKeyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHKeyService.swift; sourceTree = "<group>"; };
+		ADDFILE225 /* OnePasswordSSHAgent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnePasswordSSHAgent.swift; sourceTree = "<group>"; };
+		ADDFILE226 /* HandoffManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandoffManager.swift; sourceTree = "<group>"; };
+		ADDFILE227 /* GitUndoManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitUndoManager.swift; sourceTree = "<group>"; };
+		ADDFILE228 /* UndoDiscardService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UndoDiscardService.swift; sourceTree = "<group>"; };
+		ADDFILE229 /* MultiWindowManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiWindowManager.swift; sourceTree = "<group>"; };
+		ADDFILE230 /* SyncButtonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncButtonView.swift; sourceTree = "<group>"; };
+		ADDFILE231 /* TouchBarManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TouchBarManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -325,28 +511,39 @@
 		MODELGROUP /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				MODELFILE027 /* ArchivedBranch.swift */,
+				MODELFILE028 /* Bitbucket.swift */,
 				MODELFILE003 /* Branch.swift */,
 				MODELFILE014 /* CommandPalette.swift */,
 				MODELFILE004 /* Commit.swift */,
 				MODELFILE015 /* CommitGraph.swift */,
+				MODELFILE029 /* CommitTemplate.swift */,
 				MODELFILE009 /* DiffHunk.swift */,
 				MODELFILE010 /* DiffLine.swift */,
+				MODELFILE030 /* ExternalTool.swift */,
 				MODELFILE006 /* FileChangeType.swift */,
 				MODELFILE008 /* FileDiff.swift */,
 				MODELFILE005 /* FileStatus.swift */,
 				MODELFILE016 /* FileTree.swift */,
 				MODELFILE017 /* GitConfig.swift */,
 				MODELFILE001 /* GitError.swift */,
+				MODELFILE023 /* GitFlowConfig.swift */,
 				MODELFILE018 /* GitHub.swift */,
+				MODELFILE031 /* GitLab.swift */,
+				MODELFILE032 /* Gitmoji.swift */,
 				MODELFILE019 /* InteractiveRebase.swift */,
+				MODELFILE026 /* LFSFile.swift */,
 				MODELFILE020 /* MergeConflict.swift */,
+				MODELFILE024 /* ReflogEntry.swift */,
 				MODELFILE012 /* Remote.swift */,
 				MODELFILE002 /* Repository.swift */,
 				MODELFILE021 /* RepositoryManager.swift */,
+				MODELFILE033 /* SSHKey.swift */,
 				MODELFILE011 /* Stash.swift */,
 				MODELFILE022 /* Submodule.swift */,
 				MODELFILE013 /* Tag.swift */,
 				MODELFILE007 /* WorkingTreeStatus.swift */,
+				MODELFILE025 /* Worktree.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -354,16 +551,23 @@
 		VMGROUP /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				ADDFILE204 /* BitbucketViewModel.swift */,
+				ADDFILE205 /* BranchReviewViewModel.swift */,
+				ADDFILE206 /* GitLabViewModel.swift */,
+				ADDFILE207 /* ReflogViewModel.swift */,
+				ADDFILE208 /* WorktreeViewModel.swift */,
 				VMFILE007 /* BranchViewModel.swift */,
 				VMFILE011 /* CommandPaletteViewModel.swift */,
 				VMFILE005 /* CommitViewModel.swift */,
 				VMFILE012 /* ConfigViewModel.swift */,
 				VMFILE004 /* DiffViewModel.swift */,
 				VMFILE013 /* FileTreeViewModel.swift */,
+				VMFILE023 /* GitFlowViewModel.swift */,
 				VMFILE014 /* GitHubViewModel.swift */,
 				VMFILE006 /* HistoryViewModel.swift */,
 				VMFILE015 /* InteractiveRebaseViewModel.swift */,
 				VMFILE016 /* MergeConflictViewModel.swift */,
+				VMFILE022 /* PatchViewModel.swift */,
 				VMFILE009 /* RemoteViewModel.swift */,
 				VMFILE017 /* RepositoryManagerViewModel.swift */,
 				VMFILE001 /* RepositoryViewModel.swift */,
@@ -379,23 +583,36 @@
 		VIEWGROUP /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				VIEWMAINGROUP /* Main */,
-				VIEWREPOGROUP /* Repository */,
-				VIEWSTATUSGROUP /* Status */,
-				VIEWDIFFGROUP /* Diff */,
-				VIEWCOMMITGROUP /* Commit */,
+				VIEWSYNCGROUP /* Sync */,
+				VIEWTOUCHBARGROUP /* TouchBar */,
+				VIEWAZUREGROUP /* AzureDevOps */,
+				VIEWBEANSTALKGROUP /* Beanstalk */,
+				VIEWBITBUCKETGROUP /* Bitbucket */,
 				VIEWBRANCHGROUP /* Branch */,
-				VIEWSTASHGROUP /* Stash */,
-				VIEWTAGGROUP /* Tag */,
+				VIEWCMDPALETTEGROUP /* CommandPalette */,
+				VIEWCOMMITGROUP /* Commit */,
+				VIEWDIFFGROUP /* Diff */,
+				VIEWFILETREEGROUP /* FileTree */,
+				VIEWGITEAGROUP /* Gitea */,
+				VIEWGITFLOWGROUP /* GitFlow */,
+				VIEWGITHUBGROUP /* GitHub */,
+				VIEWGITLABGROUP /* GitLab */,
+				VIEWHELPGROUP /* Help */,
+				VIEWMAINGROUP /* Main */,
+				VIEWMENUBARGROUP /* MenuBar */,
+				VIEWMERGEGROUP /* Merge */,
+				VIEWPATCHGROUP /* Patch */,
+				VIEWREBASEGROUP /* Rebase */,
+				VIEWREFLOGGROUP /* Reflog */,
 				VIEWREMOTEGROUP /* Remote */,
+				VIEWREPOGROUP /* Repository */,
 				VIEWSETTINGSGROUP /* Settings */,
 				VIEWSHAREDGROUP /* Shared */,
-				VIEWCMDPALETTEGROUP /* CommandPalette */,
-				VIEWFILETREEGROUP /* FileTree */,
-				VIEWGITHUBGROUP /* GitHub */,
-				VIEWMERGEGROUP /* Merge */,
-				VIEWREBASEGROUP /* Rebase */,
+				VIEWSTASHGROUP /* Stash */,
 				VIEWSUBMODULEGROUP /* Submodule */,
+				VIEWTAGGROUP /* Tag */,
+				VIEWSTATUSGROUP /* Status */,
+				VIEWWORKTREEGROUP /* Worktree */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -403,9 +620,10 @@
 		VIEWMAINGROUP /* Main */ = {
 			isa = PBXGroup;
 			children = (
+				VIEWFILE003 /* ContentArea.swift */,
 				VIEWFILE001 /* MainWindow.swift */,
 				VIEWFILE002 /* Sidebar.swift */,
-				VIEWFILE003 /* ContentArea.swift */,
+				VIEWFILE059 /* TabWindowManager.swift */,
 			);
 			path = Main;
 			sourceTree = "<group>";
@@ -413,10 +631,13 @@
 		VIEWREPOGROUP /* Repository */ = {
 			isa = PBXGroup;
 			children = (
+				VIEWFILE028 /* CloneRepositorySheet.swift */,
+				VIEWFILE062 /* CreateRemoteRepositoryView.swift */,
+				VIEWFILE063 /* DeleteRepositoryView.swift */,
+				VIEWFILE064 /* RepositoryInfoView.swift */,
+				VIEWFILE042 /* RepositoryManagerView.swift */,
 				VIEWFILE004 /* RepositoryOpenView.swift */,
 				VIEWFILE005 /* RepositoryOverview.swift */,
-				VIEWFILE028 /* CloneRepositorySheet.swift */,
-				VIEWFILE042 /* RepositoryManagerView.swift */,
 			);
 			path = Repository;
 			sourceTree = "<group>";
@@ -435,11 +656,12 @@
 		VIEWDIFFGROUP /* Diff */ = {
 			isa = PBXGroup;
 			children = (
-				VIEWFILE010 /* DiffView.swift */,
-				VIEWFILE011 /* UnifiedDiffView.swift */,
-				VIEWFILE012 /* SplitDiffView.swift */,
-				VIEWFILE013 /* DiffToolbar.swift */,
 				VIEWFILE014 /* DiffFileHeader.swift */,
+				VIEWFILE013 /* DiffToolbar.swift */,
+				VIEWFILE010 /* DiffView.swift */,
+				VIEWFILE054 /* ImageDiffView.swift */,
+				VIEWFILE012 /* SplitDiffView.swift */,
+				VIEWFILE011 /* UnifiedDiffView.swift */,
 				VIEWFILE037 /* VirtualizedDiffView.swift */,
 			);
 			path = Diff;
@@ -448,10 +670,12 @@
 		VIEWCOMMITGROUP /* Commit */ = {
 			isa = PBXGroup;
 			children = (
+				VIEWFILE018 /* CommitCreationView.swift */,
+				VIEWFILE017 /* CommitDetailView.swift */,
 				VIEWFILE015 /* CommitHistoryView.swift */,
 				VIEWFILE016 /* CommitRow.swift */,
-				VIEWFILE017 /* CommitDetailView.swift */,
-				VIEWFILE018 /* CommitCreationView.swift */,
+				VIEWFILE055 /* CommitTreeView.swift */,
+				VIEWFILE056 /* GitmojiPickerView.swift */,
 			);
 			path = Commit;
 			sourceTree = "<group>";
@@ -459,14 +683,16 @@
 		VIEWBRANCHGROUP /* Branch */ = {
 			isa = PBXGroup;
 			children = (
-				VIEWFILE019 /* BranchListView.swift */,
-				VIEWFILE020 /* BranchRow.swift */,
-				VIEWFILE021 /* BranchCreationSheet.swift */,
 				VIEWFILE031 /* BranchCompareSheet.swift */,
+				VIEWFILE021 /* BranchCreationSheet.swift */,
+				VIEWFILE019 /* BranchListView.swift */,
 				VIEWFILE032 /* BranchRenameSheet.swift */,
+				VIEWFILE057 /* BranchReviewView.swift */,
+				VIEWFILE020 /* BranchRow.swift */,
 				VIEWFILE033 /* MergeBranchSheet.swift */,
 				VIEWFILE034 /* RebaseBranchSheet.swift */,
 				VIEWFILE035 /* SetUpstreamSheet.swift */,
+				VIEWFILE058 /* StackedBranchesView.swift */,
 			);
 			path = Branch;
 			sourceTree = "<group>";
@@ -474,6 +700,7 @@
 		VIEWSTASHGROUP /* Stash */ = {
 			isa = PBXGroup;
 			children = (
+				ADDFILE216 /* SnapshotsView.swift */,
 				VIEWFILE025 /* StashListView.swift */,
 			);
 			path = Stash;
@@ -498,8 +725,18 @@
 		VIEWSETTINGSGROUP /* Settings */ = {
 			isa = PBXGroup;
 			children = (
-				VIEWFILE029 /* SettingsView.swift */,
+				ADDFILE209 /* EnvironmentVariablesView.swift */,
+				ADDFILE210 /* ExternalToolsSettingsView.swift */,
+				ADDFILE211 /* GPGKeysSettingsView.swift */,
+				ADDFILE212 /* KeyboardShortcutsSettingsView.swift */,
+				ADDFILE213 /* SettingsBackupView.swift */,
+				ADDFILE214 /* SSHKeysSettingsView.swift */,
+				ADDFILE215 /* SyntaxHighlightingSettingsView.swift */,
+				VIEWFILE065 /* AppearanceSettingsView.swift */,
+				VIEWFILE066 /* CLIToolInstallerView.swift */,
+				VIEWFILE067 /* CommitTemplatesView.swift */,
 				VIEWFILE043 /* ConfigView.swift */,
+				VIEWFILE029 /* SettingsView.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -535,7 +772,11 @@
 		VIEWGITHUBGROUP /* GitHub */ = {
 			isa = PBXGroup;
 			children = (
+				VIEWFILE051 /* CreatePullRequestSheet.swift */,
 				VIEWFILE039 /* GitHubView.swift */,
+				VIEWFILE052 /* PRCommentView.swift */,
+				VIEWFILE046 /* PRDiffView.swift */,
+				VIEWFILE053 /* PRReviewSheet.swift */,
 			);
 			path = GitHub;
 			sourceTree = "<group>";
@@ -564,9 +805,117 @@
 			path = Submodule;
 			sourceTree = "<group>";
 		};
+		VIEWGITFLOWGROUP /* GitFlow */ = {
+			isa = PBXGroup;
+			children = (
+				VIEWFILE049 /* GitFlowInitSheet.swift */,
+				VIEWFILE050 /* GitFlowMenu.swift */,
+			);
+			path = GitFlow;
+			sourceTree = "<group>";
+		};
+		VIEWREFLOGGROUP /* Reflog */ = {
+			isa = PBXGroup;
+			children = (
+				VIEWFILE047 /* ReflogView.swift */,
+			);
+			path = Reflog;
+			sourceTree = "<group>";
+		};
+		VIEWWORKTREEGROUP /* Worktree */ = {
+			isa = PBXGroup;
+			children = (
+				VIEWFILE048 /* WorktreeView.swift */,
+			);
+			path = Worktree;
+			sourceTree = "<group>";
+		};
+		VIEWHELPGROUP /* Help */ = {
+			isa = PBXGroup;
+			children = (
+				VIEWFILE068 /* GettingStartedView.swift */,
+				VIEWFILE069 /* HelpDocumentationView.swift */,
+				VIEWFILE070 /* KeyboardShortcutsView.swift */,
+				VIEWFILE071 /* LearningResourcesView.swift */,
+				VIEWFILE072 /* WhatsNewView.swift */,
+			);
+			path = Help;
+			sourceTree = "<group>";
+		};
+		VIEWMENUBARGROUP /* MenuBar */ = {
+			isa = PBXGroup;
+			children = (
+				VIEWFILE060 /* MenuBarManager.swift */,
+			);
+			path = MenuBar;
+			sourceTree = "<group>";
+		};
+		VIEWPATCHGROUP /* Patch */ = {
+			isa = PBXGroup;
+			children = (
+				VIEWFILE061 /* PatchView.swift */,
+			);
+			path = Patch;
+			sourceTree = "<group>";
+		};
+		VIEWBITBUCKETGROUP /* Bitbucket */ = {
+			isa = PBXGroup;
+			children = (
+				VIEWFILE073 /* BitbucketView.swift */,
+			);
+			path = Bitbucket;
+			sourceTree = "<group>";
+		};
+		VIEWGITLABGROUP /* GitLab */ = {
+			isa = PBXGroup;
+			children = (
+				VIEWFILE074 /* GitLabView.swift */,
+			);
+			path = GitLab;
+			sourceTree = "<group>";
+		};
+		VIEWGITEAGROUP /* Gitea */ = {
+			isa = PBXGroup;
+			children = (
+				VIEWFILE075 /* GiteaView.swift */,
+			);
+			path = Gitea;
+			sourceTree = "<group>";
+		};
+		VIEWAZUREGROUP /* AzureDevOps */ = {
+			isa = PBXGroup;
+			children = (
+				VIEWFILE076 /* AzureDevOpsView.swift */,
+			);
+			path = AzureDevOps;
+			sourceTree = "<group>";
+		};
+		VIEWBEANSTALKGROUP /* Beanstalk */ = {
+			isa = PBXGroup;
+			children = (
+				VIEWFILE077 /* BeanstalkView.swift */,
+			);
+			path = Beanstalk;
+			sourceTree = "<group>";
+		};
 		SVCGROUP /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				SVCBITBUCKETGROUP /* Bitbucket */,
+				SVCGITLABGROUP /* GitLab */,
+				SVCGITEAGROUP /* Gitea */,
+				SVCAZUREGROUP /* AzureDevOps */,
+				SVCBEANSTALKGROUP /* Beanstalk */,
+				SVCEXTTOOLSGROUP /* ExternalTools */,
+				SVCSECURITYGROUP /* Security */,
+				SVCSSHGROUP /* SSH */,
+				SVCHANDOFFGROUP /* Handoff */,
+				SVCUNDOGROUP /* Undo */,
+				SVCUNDOMANAGERGROUP /* UndoManager */,
+				SVCWINDOWGROUP /* Window */,
+				ADDFILE200 /* AutoStashService.swift */,
+				ADDFILE201 /* NotificationService.swift */,
+				ADDFILE202 /* SpotlightService.swift */,
 				SVCGITGROUP /* Git */,
 				SVCGITHUBGROUP /* GitHub */,
 				SVCPERSISTGROUP /* Persistence */,
@@ -577,6 +926,7 @@
 		SVCGITGROUP /* Git */ = {
 			isa = PBXGroup;
 			children = (
+				ADDFILE203 /* GitSVNService.swift */,
 				SVCFILE001 /* GitExecutor.swift */,
 				SVCFILE002 /* GitService.swift */,
 				SVCCMDGROUP /* Commands */,
@@ -588,19 +938,26 @@
 		SVCCMDGROUP /* Commands */ = {
 			isa = PBXGroup;
 			children = (
-				SVCFILE003 /* GitCommand.swift */,
-				SVCFILE004 /* StatusCommand.swift */,
-				SVCFILE005 /* DiffCommand.swift */,
-				SVCFILE006 /* LogCommand.swift */,
+				SVCFILE032 /* ArchiveCommand.swift */,
 				SVCFILE007 /* BranchCommand.swift */,
 				SVCFILE008 /* CommitCommand.swift */,
-				SVCFILE009 /* StageCommand.swift */,
-				SVCFILE016 /* StashCommand.swift */,
-				SVCFILE017 /* RemoteCommand.swift */,
-				SVCFILE018 /* TagCommand.swift */,
 				SVCFILE022 /* ConfigCommand.swift */,
+				SVCFILE005 /* DiffCommand.swift */,
+				SVCFILE003 /* GitCommand.swift */,
+				SVCFILE029 /* GitFlowCommand.swift */,
+				SVCFILE030 /* LFSCommand.swift */,
+				SVCFILE006 /* LogCommand.swift */,
 				SVCFILE023 /* MergeCommand.swift */,
+				SVCFILE028 /* ReflogCommand.swift */,
+				SVCFILE017 /* RemoteCommand.swift */,
+				SVCFILE009 /* StageCommand.swift */,
+				SVCFILE033 /* StashAdvancedCommand.swift */,
+				SVCFILE016 /* StashCommand.swift */,
+				SVCFILE004 /* StatusCommand.swift */,
 				SVCFILE024 /* SubmoduleCommand.swift */,
+				SVCFILE018 /* TagCommand.swift */,
+				SVCFILE034 /* TreeCommand.swift */,
+				SVCFILE031 /* WorktreeCommand.swift */,
 			);
 			path = Commands;
 			sourceTree = "<group>";
@@ -608,12 +965,13 @@
 		SVCPARSERGROUP /* Parsers */ = {
 			isa = PBXGroup;
 			children = (
-				SVCFILE010 /* StatusParser.swift */,
+				SVCFILE013 /* BranchParser.swift */,
 				SVCFILE011 /* DiffParser.swift */,
 				SVCFILE012 /* LogParser.swift */,
-				SVCFILE013 /* BranchParser.swift */,
-				SVCFILE019 /* StashParser.swift */,
+				SVCFILE035 /* ReflogParser.swift */,
 				SVCFILE020 /* RemoteParser.swift */,
+				SVCFILE019 /* StashParser.swift */,
+				SVCFILE010 /* StatusParser.swift */,
 				SVCFILE021 /* TagParser.swift */,
 			);
 			path = Parsers;
@@ -632,7 +990,11 @@
 		SVCPERSISTGROUP /* Persistence */ = {
 			isa = PBXGroup;
 			children = (
+				SVCFILE038 /* ArchivedBranchStore.swift */,
+				SVCFILE039 /* CommitTemplateStore.swift */,
+				SVCFILE036 /* KeychainService.swift */,
 				SVCFILE014 /* RecentRepositoriesStore.swift */,
+				SVCFILE037 /* RepositoryGroupStore.swift */,
 				SVCFILE015 /* SettingsStore.swift */,
 			);
 			path = Persistence;
@@ -642,9 +1004,13 @@
 			isa = PBXGroup;
 			children = (
 				UTILEXTGROUP /* Extensions */,
+				UTILFILE007 /* AdvancedDragDropHandler.swift */,
 				UTILFILE003 /* Constants.swift */,
 				UTILFILE004 /* DesignSystem.swift */,
+				UTILFILE008 /* DragDropCoordinator.swift */,
 				UTILFILE005 /* KeyboardShortcuts.swift */,
+				UTILFILE009 /* NavigationHistory.swift */,
+				UTILFILE010 /* View+Extensions.swift */,
 				UTILFILE006 /* WordDiff.swift */,
 			);
 			path = Utilities;
@@ -665,6 +1031,119 @@
 				RESFILE001 /* Assets.xcassets */,
 			);
 			path = Resources;
+			sourceTree = "<group>";
+		};
+		SVCBITBUCKETGROUP /* Bitbucket */ = {
+			isa = PBXGroup;
+			children = (
+				ADDFILE217 /* BitbucketService.swift */,
+			);
+			path = Bitbucket;
+			sourceTree = "<group>";
+		};
+		SVCGITLABGROUP /* GitLab */ = {
+			isa = PBXGroup;
+			children = (
+				ADDFILE218 /* GitLabService.swift */,
+			);
+			path = GitLab;
+			sourceTree = "<group>";
+		};
+		SVCGITEAGROUP /* Gitea */ = {
+			isa = PBXGroup;
+			children = (
+				ADDFILE219 /* GiteaService.swift */,
+			);
+			path = Gitea;
+			sourceTree = "<group>";
+		};
+		SVCAZUREGROUP /* AzureDevOps */ = {
+			isa = PBXGroup;
+			children = (
+				ADDFILE220 /* AzureDevOpsService.swift */,
+			);
+			path = AzureDevOps;
+			sourceTree = "<group>";
+		};
+		SVCBEANSTALKGROUP /* Beanstalk */ = {
+			isa = PBXGroup;
+			children = (
+				ADDFILE221 /* BeanstalkService.swift */,
+			);
+			path = Beanstalk;
+			sourceTree = "<group>";
+		};
+		SVCEXTTOOLSGROUP /* ExternalTools */ = {
+			isa = PBXGroup;
+			children = (
+				ADDFILE222 /* ExternalToolService.swift */,
+			);
+			path = ExternalTools;
+			sourceTree = "<group>";
+		};
+		SVCSECURITYGROUP /* Security */ = {
+			isa = PBXGroup;
+			children = (
+				ADDFILE223 /* GPGService.swift */,
+				ADDFILE224 /* SSHKeyService.swift */,
+			);
+			path = Security;
+			sourceTree = "<group>";
+		};
+		SVCSSHGROUP /* SSH */ = {
+			isa = PBXGroup;
+			children = (
+				ADDFILE225 /* OnePasswordSSHAgent.swift */,
+			);
+			path = SSH;
+			sourceTree = "<group>";
+		};
+		SVCHANDOFFGROUP /* Handoff */ = {
+			isa = PBXGroup;
+			children = (
+				ADDFILE226 /* HandoffManager.swift */,
+			);
+			path = Handoff;
+			sourceTree = "<group>";
+		};
+		SVCUNDOGROUP /* Undo */ = {
+			isa = PBXGroup;
+			children = (
+				ADDFILE227 /* GitUndoManager.swift */,
+			);
+			path = Undo;
+			sourceTree = "<group>";
+		};
+		SVCUNDOMANAGERGROUP /* UndoManager */ = {
+			isa = PBXGroup;
+			children = (
+				ADDFILE228 /* UndoDiscardService.swift */,
+			);
+			path = UndoManager;
+			sourceTree = "<group>";
+		};
+		SVCWINDOWGROUP /* Window */ = {
+			isa = PBXGroup;
+			children = (
+				ADDFILE229 /* MultiWindowManager.swift */,
+			);
+			path = Window;
+			sourceTree = "<group>";
+		};
+		VIEWSYNCGROUP /* Sync */ = {
+			isa = PBXGroup;
+			children = (
+				ADDFILE230 /* SyncButtonView.swift */,
+			);
+			path = Sync;
+			sourceTree = "<group>";
+		};
+		VIEWTOUCHBARGROUP /* TouchBar */ = {
+			isa = PBXGroup;
+			children = (
+				ADDFILE231 /* TouchBarManager.swift */,
+			);
+			path = TouchBar;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -759,6 +1238,17 @@
 				MODEL020 /* MergeConflict.swift in Sources */,
 				MODEL021 /* RepositoryManager.swift in Sources */,
 				MODEL022 /* Submodule.swift in Sources */,
+				MODEL023 /* GitFlowConfig.swift in Sources */,
+				MODEL024 /* ReflogEntry.swift in Sources */,
+				MODEL025 /* Worktree.swift in Sources */,
+				MODEL026 /* LFSFile.swift in Sources */,
+				MODEL027 /* ArchivedBranch.swift in Sources */,
+				MODEL028 /* Bitbucket.swift in Sources */,
+				MODEL029 /* CommitTemplate.swift in Sources */,
+				MODEL030 /* ExternalTool.swift in Sources */,
+				MODEL031 /* GitLab.swift in Sources */,
+				MODEL032 /* Gitmoji.swift in Sources */,
+				MODEL033 /* SSHKey.swift in Sources */,
 				SVC001 /* GitExecutor.swift in Sources */,
 				SVC002 /* GitService.swift in Sources */,
 				SVC003 /* GitCommand.swift in Sources */,
@@ -786,6 +1276,18 @@
 				SVC025 /* GitHubService.swift in Sources */,
 				SVC026 /* GitHubDeviceAuth.swift in Sources */,
 				SVC027 /* GitHubOAuth.swift in Sources */,
+				SVC028 /* ReflogCommand.swift in Sources */,
+				SVC029 /* GitFlowCommand.swift in Sources */,
+				SVC030 /* LFSCommand.swift in Sources */,
+				SVC031 /* WorktreeCommand.swift in Sources */,
+				SVC032 /* ArchiveCommand.swift in Sources */,
+				SVC033 /* StashAdvancedCommand.swift in Sources */,
+				SVC034 /* TreeCommand.swift in Sources */,
+				SVC035 /* ReflogParser.swift in Sources */,
+				SVC036 /* KeychainService.swift in Sources */,
+				SVC037 /* RepositoryGroupStore.swift in Sources */,
+				SVC038 /* ArchivedBranchStore.swift in Sources */,
+				SVC039 /* CommitTemplateStore.swift in Sources */,
 				VM001 /* RepositoryViewModel.swift in Sources */,
 				VM002 /* StatusViewModel.swift in Sources */,
 				VM003 /* StagingViewModel.swift in Sources */,
@@ -804,6 +1306,8 @@
 				VM016 /* MergeConflictViewModel.swift in Sources */,
 				VM017 /* RepositoryManagerViewModel.swift in Sources */,
 				VM018 /* SubmoduleViewModel.swift in Sources */,
+				VM022 /* PatchViewModel.swift in Sources */,
+				VM023 /* GitFlowViewModel.swift in Sources */,
 				VIEW001 /* MainWindow.swift in Sources */,
 				VIEW002 /* Sidebar.swift in Sources */,
 				VIEW003 /* ContentArea.swift in Sources */,
@@ -849,12 +1353,80 @@
 				VIEW043 /* ConfigView.swift in Sources */,
 				VIEW044 /* SpellCheckTextEditor.swift in Sources */,
 				VIEW045 /* SubmoduleListView.swift in Sources */,
+				VIEW046 /* PRDiffView.swift in Sources */,
+				VIEW047 /* ReflogView.swift in Sources */,
+				VIEW048 /* WorktreeView.swift in Sources */,
+				VIEW049 /* GitFlowInitSheet.swift in Sources */,
+				VIEW050 /* GitFlowMenu.swift in Sources */,
+				VIEW051 /* CreatePullRequestSheet.swift in Sources */,
+				VIEW052 /* PRCommentView.swift in Sources */,
+				VIEW053 /* PRReviewSheet.swift in Sources */,
+				VIEW054 /* ImageDiffView.swift in Sources */,
+				VIEW055 /* CommitTreeView.swift in Sources */,
+				VIEW056 /* GitmojiPickerView.swift in Sources */,
+				VIEW057 /* BranchReviewView.swift in Sources */,
+				VIEW058 /* StackedBranchesView.swift in Sources */,
+				VIEW059 /* TabWindowManager.swift in Sources */,
+				VIEW060 /* MenuBarManager.swift in Sources */,
+				VIEW061 /* PatchView.swift in Sources */,
+				VIEW062 /* CreateRemoteRepositoryView.swift in Sources */,
+				VIEW063 /* DeleteRepositoryView.swift in Sources */,
+				VIEW064 /* RepositoryInfoView.swift in Sources */,
+				VIEW065 /* AppearanceSettingsView.swift in Sources */,
+				VIEW066 /* CLIToolInstallerView.swift in Sources */,
+				VIEW067 /* CommitTemplatesView.swift in Sources */,
+				VIEW068 /* GettingStartedView.swift in Sources */,
+				VIEW069 /* HelpDocumentationView.swift in Sources */,
+				VIEW070 /* KeyboardShortcutsView.swift in Sources */,
+				VIEW071 /* LearningResourcesView.swift in Sources */,
+				VIEW072 /* WhatsNewView.swift in Sources */,
+				VIEW073 /* BitbucketView.swift in Sources */,
+				VIEW074 /* GitLabView.swift in Sources */,
+				VIEW075 /* GiteaView.swift in Sources */,
+				VIEW076 /* AzureDevOpsView.swift in Sources */,
+				VIEW077 /* BeanstalkView.swift in Sources */,
 				UTIL001 /* String+Git.swift in Sources */,
 				UTIL002 /* Date+Formatting.swift in Sources */,
 				UTIL003 /* Constants.swift in Sources */,
 				UTIL004 /* DesignSystem.swift in Sources */,
 				UTIL005 /* KeyboardShortcuts.swift in Sources */,
 				UTIL006 /* WordDiff.swift in Sources */,
+				UTIL007 /* AdvancedDragDropHandler.swift in Sources */,
+				UTIL008 /* DragDropCoordinator.swift in Sources */,
+				UTIL009 /* NavigationHistory.swift in Sources */,
+				UTIL010 /* View+Extensions.swift in Sources */,
+				ADD200 /* AutoStashService.swift in Sources */,
+				ADD201 /* NotificationService.swift in Sources */,
+				ADD202 /* SpotlightService.swift in Sources */,
+				ADD203 /* GitSVNService.swift in Sources */,
+				ADD204 /* BitbucketViewModel.swift in Sources */,
+				ADD205 /* BranchReviewViewModel.swift in Sources */,
+				ADD206 /* GitLabViewModel.swift in Sources */,
+				ADD207 /* ReflogViewModel.swift in Sources */,
+				ADD208 /* WorktreeViewModel.swift in Sources */,
+				ADD209 /* EnvironmentVariablesView.swift in Sources */,
+				ADD210 /* ExternalToolsSettingsView.swift in Sources */,
+				ADD211 /* GPGKeysSettingsView.swift in Sources */,
+				ADD212 /* KeyboardShortcutsSettingsView.swift in Sources */,
+				ADD213 /* SettingsBackupView.swift in Sources */,
+				ADD214 /* SSHKeysSettingsView.swift in Sources */,
+				ADD215 /* SyntaxHighlightingSettingsView.swift in Sources */,
+				ADD216 /* SnapshotsView.swift in Sources */,
+				ADD217 /* BitbucketService.swift in Sources */,
+				ADD218 /* GitLabService.swift in Sources */,
+				ADD219 /* GiteaService.swift in Sources */,
+				ADD220 /* AzureDevOpsService.swift in Sources */,
+				ADD221 /* BeanstalkService.swift in Sources */,
+				ADD222 /* ExternalToolService.swift in Sources */,
+				ADD223 /* GPGService.swift in Sources */,
+				ADD224 /* SSHKeyService.swift in Sources */,
+				ADD225 /* OnePasswordSSHAgent.swift in Sources */,
+				ADD226 /* HandoffManager.swift in Sources */,
+				ADD227 /* GitUndoManager.swift in Sources */,
+				ADD228 /* UndoDiscardService.swift in Sources */,
+				ADD229 /* MultiWindowManager.swift in Sources */,
+				ADD230 /* SyncButtonView.swift in Sources */,
+				ADD231 /* TouchBarManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -873,6 +1445,7 @@
 				DEVELOPMENT_ASSET_PATHS = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = GitFlow/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -900,6 +1473,7 @@
 				DEVELOPMENT_ASSET_PATHS = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = GitFlow/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (

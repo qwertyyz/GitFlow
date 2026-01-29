@@ -8,6 +8,10 @@ struct CommitCreationView: View {
     @FocusState private var isMessageFocused: Bool
     @State private var showAdvancedOptions: Bool = false
     @State private var showAuthorSheet: Bool = false
+    @State private var showTemplatePicker: Bool = false
+    @State private var selectedTemplate: CommitTemplate?
+    @State private var showPlaceholderSheet: Bool = false
+    @StateObject private var templateStore = TemplatePickerStore()
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -131,12 +135,41 @@ struct CommitCreationView: View {
                 .foregroundStyle(.secondary)
                 .disabled(viewModel.commitMessage.isEmpty)
 
-                if viewModel.commitTemplate != nil {
-                    Button("Template") {
-                        Task { await viewModel.loadTemplate() }
+                // Template picker menu
+                Menu {
+                    if templateStore.templates.isEmpty {
+                        Text("No templates available")
+                    } else {
+                        ForEach(CommitTemplate.Category.allCases) { category in
+                            let categoryTemplates = templateStore.templates.filter { $0.category == category }
+                            if !categoryTemplates.isEmpty {
+                                Section(category.rawValue) {
+                                    ForEach(categoryTemplates) { template in
+                                        Button {
+                                            applyTemplate(template)
+                                        } label: {
+                                            Label(template.name, systemImage: category.icon)
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.secondary)
+
+                    Divider()
+
+                    Button {
+                        NSWorkspace.shared.open(URL(string: "gitflow://settings/templates")!)
+                    } label: {
+                        Label("Manage Templates...", systemImage: "gear")
+                    }
+                } label: {
+                    Label("Template", systemImage: "doc.text")
+                }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
+                .task {
+                    templateStore.loadTemplates()
                 }
 
                 Spacer()
@@ -185,8 +218,31 @@ struct CommitCreationView: View {
         .sheet(isPresented: $showAuthorSheet) {
             AuthorOverrideSheet(viewModel: viewModel, isPresented: $showAuthorSheet)
         }
+        .sheet(isPresented: $showPlaceholderSheet) {
+            if let template = selectedTemplate {
+                TemplatePlaceholderSheet(
+                    template: template,
+                    isPresented: $showPlaceholderSheet,
+                    onApply: { content in
+                        viewModel.commitMessage = content
+                    }
+                )
+            }
+        }
         .task {
             await viewModel.loadInitialData()
+        }
+    }
+
+    private func applyTemplate(_ template: CommitTemplate) {
+        // Defer state changes to avoid "Publishing changes from within view updates" warning
+        Task { @MainActor in
+            if template.hasPlaceholders {
+                selectedTemplate = template
+                showPlaceholderSheet = true
+            } else {
+                viewModel.commitMessage = template.content
+            }
         }
     }
 
@@ -264,6 +320,149 @@ private struct AuthorOverrideSheet: View {
             .padding()
         }
         .frame(width: 300)
+    }
+}
+
+// MARK: - Template Picker Store
+
+/// Simple store for loading templates in commit view.
+@MainActor
+private final class TemplatePickerStore: ObservableObject {
+    @Published var templates: [CommitTemplate] = []
+
+    private let store = CommitTemplateStore()
+
+    func loadTemplates() {
+        templates = store.loadAll()
+    }
+}
+
+// MARK: - Template Placeholder Sheet
+
+/// Sheet for filling in template placeholders.
+private struct TemplatePlaceholderSheet: View {
+    let template: CommitTemplate
+    @Binding var isPresented: Bool
+    let onApply: (String) -> Void
+
+    @State private var placeholderValues: [String: String] = [:]
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                Text("Fill in Template")
+                    .font(.headline)
+
+                Spacer()
+
+                Button {
+                    isPresented = false
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding()
+
+            Divider()
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: DSSpacing.md) {
+                    // Template info
+                    HStack {
+                        Image(systemName: template.category.icon)
+                            .foregroundStyle(.secondary)
+                        Text(template.name)
+                            .fontWeight(.medium)
+                        Spacer()
+                    }
+                    .padding(.bottom, DSSpacing.sm)
+
+                    // Placeholder fields
+                    ForEach(template.placeholderNames, id: \.self) { placeholder in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(placeholder.capitalized)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+
+                            if placeholder.lowercased().contains("description") ||
+                               placeholder.lowercased().contains("body") ||
+                               placeholder.lowercased().contains("message") {
+                                TextEditor(text: binding(for: placeholder))
+                                    .font(.system(.body, design: .monospaced))
+                                    .frame(minHeight: 60, maxHeight: 100)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 4)
+                                            .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
+                                    )
+                            } else {
+                                TextField("Enter \(placeholder)...", text: binding(for: placeholder))
+                                    .textFieldStyle(.roundedBorder)
+                            }
+                        }
+                    }
+
+                    // Preview
+                    if !placeholderValues.isEmpty {
+                        Divider()
+                            .padding(.vertical, DSSpacing.sm)
+
+                        Text("Preview")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        Text(previewContent)
+                            .font(.system(.body, design: .monospaced))
+                            .padding(DSSpacing.sm)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color.secondary.opacity(0.1))
+                            .cornerRadius(DSRadius.sm)
+                    }
+                }
+                .padding()
+            }
+
+            Divider()
+
+            // Footer
+            HStack {
+                Button("Cancel") {
+                    isPresented = false
+                }
+                .keyboardShortcut(.cancelAction)
+
+                Spacer()
+
+                Button("Apply Template") {
+                    let content = template.apply(placeholders: placeholderValues)
+                    onApply(content)
+                    isPresented = false
+                }
+                .buttonStyle(.borderedProminent)
+                .keyboardShortcut(.defaultAction)
+            }
+            .padding()
+        }
+        .frame(width: 400, height: 450)
+        .onAppear {
+            // Initialize placeholder values
+            for name in template.placeholderNames {
+                placeholderValues[name] = ""
+            }
+        }
+    }
+
+    private func binding(for placeholder: String) -> Binding<String> {
+        Binding(
+            get: { placeholderValues[placeholder] ?? "" },
+            set: { placeholderValues[placeholder] = $0 }
+        )
+    }
+
+    private var previewContent: String {
+        template.apply(placeholders: placeholderValues)
     }
 }
 

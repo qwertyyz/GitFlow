@@ -105,7 +105,10 @@ struct UnifiedDiffView: View {
     private func updateMatchLocations() {
         guard !searchText.isEmpty else {
             matchLocations = []
-            onMatchCountChanged?(0)
+            // Defer callback to avoid "Publishing changes from within view updates"
+            Task { @MainActor in
+                onMatchCountChanged?(0)
+            }
             return
         }
 
@@ -131,7 +134,10 @@ struct UnifiedDiffView: View {
         }
 
         matchLocations = locations
-        onMatchCountChanged?(locations.count)
+        // Defer callback to avoid "Publishing changes from within view updates"
+        Task { @MainActor in
+            onMatchCountChanged?(locations.count)
+        }
     }
 }
 

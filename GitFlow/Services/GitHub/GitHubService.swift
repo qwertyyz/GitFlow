@@ -151,6 +151,236 @@ actor GitHubService {
         return String(data: data, encoding: .utf8) ?? ""
     }
 
+    /// Gets the files changed in a pull request.
+    func getPullRequestFiles(owner: String, repo: String, number: Int) async throws -> [PRFileChange] {
+        let data = try await makeRequest(path: "/repos/\(owner)/\(repo)/pulls/\(number)/files")
+        let files = try decoder.decode([GitHubPRFile].self, from: data)
+
+        return files.map { file in
+            PRFileChange(
+                id: file.sha ?? file.filename,
+                filename: file.filename,
+                status: PRFileChange.FileStatus(rawValue: file.status) ?? .modified,
+                additions: file.additions,
+                deletions: file.deletions,
+                changes: file.changes,
+                patch: file.patch
+            )
+        }
+    }
+
+    // MARK: - Pull Request Write Operations
+
+    /// Creates a new pull request.
+    /// - Parameters:
+    ///   - owner: Repository owner.
+    ///   - repo: Repository name.
+    ///   - title: PR title.
+    ///   - body: PR description (optional).
+    ///   - head: The branch with changes (can include fork prefix: "username:branch").
+    ///   - base: The branch to merge into.
+    ///   - draft: Whether to create as a draft PR.
+    /// - Returns: The created pull request.
+    func createPullRequest(
+        owner: String,
+        repo: String,
+        title: String,
+        body: String?,
+        head: String,
+        base: String,
+        draft: Bool = false
+    ) async throws -> GitHubPullRequest {
+        var payload: [String: Any] = [
+            "title": title,
+            "head": head,
+            "base": base,
+            "draft": draft
+        ]
+        if let body = body {
+            payload["body"] = body
+        }
+
+        let data = try await makePostRequest(
+            path: "/repos/\(owner)/\(repo)/pulls",
+            body: payload
+        )
+        return try decoder.decode(GitHubPullRequest.self, from: data)
+    }
+
+    /// Updates an existing pull request.
+    /// - Parameters:
+    ///   - owner: Repository owner.
+    ///   - repo: Repository name.
+    ///   - number: PR number.
+    ///   - title: New title (optional).
+    ///   - body: New body (optional).
+    ///   - state: New state: "open" or "closed" (optional).
+    ///   - base: New base branch (optional).
+    /// - Returns: The updated pull request.
+    func updatePullRequest(
+        owner: String,
+        repo: String,
+        number: Int,
+        title: String? = nil,
+        body: String? = nil,
+        state: String? = nil,
+        base: String? = nil
+    ) async throws -> GitHubPullRequest {
+        var payload: [String: Any] = [:]
+        if let title = title { payload["title"] = title }
+        if let body = body { payload["body"] = body }
+        if let state = state { payload["state"] = state }
+        if let base = base { payload["base"] = base }
+
+        let data = try await makePatchRequest(
+            path: "/repos/\(owner)/\(repo)/pulls/\(number)",
+            body: payload
+        )
+        return try decoder.decode(GitHubPullRequest.self, from: data)
+    }
+
+    /// Closes a pull request.
+    func closePullRequest(owner: String, repo: String, number: Int) async throws -> GitHubPullRequest {
+        try await updatePullRequest(owner: owner, repo: repo, number: number, state: "closed")
+    }
+
+    /// Merges a pull request.
+    /// - Parameters:
+    ///   - owner: Repository owner.
+    ///   - repo: Repository name.
+    ///   - number: PR number.
+    ///   - commitTitle: Custom commit title (optional).
+    ///   - commitMessage: Custom commit message (optional).
+    ///   - mergeMethod: The merge method: "merge", "squash", or "rebase".
+    /// - Returns: The merge result.
+    func mergePullRequest(
+        owner: String,
+        repo: String,
+        number: Int,
+        commitTitle: String? = nil,
+        commitMessage: String? = nil,
+        mergeMethod: String = "merge"
+    ) async throws -> MergeResult {
+        var payload: [String: Any] = [
+            "merge_method": mergeMethod
+        ]
+        if let title = commitTitle { payload["commit_title"] = title }
+        if let message = commitMessage { payload["commit_message"] = message }
+
+        let data = try await makePutRequest(
+            path: "/repos/\(owner)/\(repo)/pulls/\(number)/merge",
+            body: payload
+        )
+        return try decoder.decode(MergeResult.self, from: data)
+    }
+
+    /// Result of a pull request merge.
+    struct MergeResult: Codable {
+        let sha: String
+        let merged: Bool
+        let message: String
+    }
+
+    // MARK: - Comment Operations
+
+    /// Adds a comment to a pull request or issue.
+    func addComment(
+        owner: String,
+        repo: String,
+        issueNumber: Int,
+        body: String
+    ) async throws -> GitHubComment {
+        let payload: [String: Any] = ["body": body]
+        let data = try await makePostRequest(
+            path: "/repos/\(owner)/\(repo)/issues/\(issueNumber)/comments",
+            body: payload
+        )
+        return try decoder.decode(GitHubComment.self, from: data)
+    }
+
+    /// Updates an existing comment.
+    func updateComment(
+        owner: String,
+        repo: String,
+        commentId: Int,
+        body: String
+    ) async throws -> GitHubComment {
+        let payload: [String: Any] = ["body": body]
+        let data = try await makePatchRequest(
+            path: "/repos/\(owner)/\(repo)/issues/comments/\(commentId)",
+            body: payload
+        )
+        return try decoder.decode(GitHubComment.self, from: data)
+    }
+
+    /// Deletes a comment.
+    func deleteComment(owner: String, repo: String, commentId: Int) async throws {
+        try await makeDeleteRequest(
+            path: "/repos/\(owner)/\(repo)/issues/comments/\(commentId)"
+        )
+    }
+
+    // MARK: - Review Operations
+
+    /// Submits a review for a pull request.
+    /// - Parameters:
+    ///   - owner: Repository owner.
+    ///   - repo: Repository name.
+    ///   - pullNumber: PR number.
+    ///   - body: Review body/comment.
+    ///   - event: Review event: "APPROVE", "REQUEST_CHANGES", or "COMMENT".
+    /// - Returns: The submitted review.
+    func submitReview(
+        owner: String,
+        repo: String,
+        pullNumber: Int,
+        body: String?,
+        event: ReviewEvent
+    ) async throws -> GitHubReview {
+        var payload: [String: Any] = [
+            "event": event.rawValue
+        ]
+        if let body = body {
+            payload["body"] = body
+        }
+
+        let data = try await makePostRequest(
+            path: "/repos/\(owner)/\(repo)/pulls/\(pullNumber)/reviews",
+            body: payload
+        )
+        return try decoder.decode(GitHubReview.self, from: data)
+    }
+
+    /// Review events for PR reviews.
+    enum ReviewEvent: String {
+        case approve = "APPROVE"
+        case requestChanges = "REQUEST_CHANGES"
+        case comment = "COMMENT"
+    }
+
+    /// Dismisses a review.
+    func dismissReview(
+        owner: String,
+        repo: String,
+        pullNumber: Int,
+        reviewId: Int,
+        message: String
+    ) async throws {
+        let payload: [String: Any] = ["message": message]
+        _ = try await makePutRequest(
+            path: "/repos/\(owner)/\(repo)/pulls/\(pullNumber)/reviews/\(reviewId)/dismissals",
+            body: payload
+        )
+    }
+
+    // MARK: - Branch Operations
+
+    /// Gets branches for a repository.
+    func getBranches(owner: String, repo: String) async throws -> [GitHubBranch] {
+        let data = try await makeRequest(path: "/repos/\(owner)/\(repo)/branches")
+        return try decoder.decode([GitHubBranch].self, from: data)
+    }
+
     // MARK: - Check Runs
 
     /// Gets check runs for a commit.
@@ -214,6 +444,31 @@ actor GitHubService {
     // MARK: - Private Helpers
 
     private func makeRequest(path: String, query: String? = nil) async throws -> Data {
+        try await makeHTTPRequest(method: "GET", path: path, query: query, body: nil)
+    }
+
+    private func makePostRequest(path: String, body: [String: Any]) async throws -> Data {
+        try await makeHTTPRequest(method: "POST", path: path, query: nil, body: body)
+    }
+
+    private func makePatchRequest(path: String, body: [String: Any]) async throws -> Data {
+        try await makeHTTPRequest(method: "PATCH", path: path, query: nil, body: body)
+    }
+
+    private func makePutRequest(path: String, body: [String: Any]) async throws -> Data {
+        try await makeHTTPRequest(method: "PUT", path: path, query: nil, body: body)
+    }
+
+    private func makeDeleteRequest(path: String) async throws {
+        _ = try await makeHTTPRequest(method: "DELETE", path: path, query: nil, body: nil)
+    }
+
+    private func makeHTTPRequest(
+        method: String,
+        path: String,
+        query: String?,
+        body: [String: Any]?
+    ) async throws -> Data {
         var urlString = apiBaseURL + path
         if let query = query {
             urlString += "?" + query
@@ -224,10 +479,16 @@ actor GitHubService {
         }
 
         var request = URLRequest(url: url)
+        request.httpMethod = method
         request.setValue("application/vnd.github.v3+json", forHTTPHeaderField: "Accept")
 
         if let token = authToken {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+
+        if let body = body {
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.httpBody = try JSONSerialization.data(withJSONObject: body)
         }
 
         let (data, response) = try await URLSession.shared.data(for: request)

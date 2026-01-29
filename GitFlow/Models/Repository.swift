@@ -18,6 +18,29 @@ struct Repository: Identifiable, Equatable {
         rootURL.path
     }
 
+    /// The remote URL of the origin remote (if available).
+    /// Computed by reading the git config.
+    var remoteURL: String? {
+        let configPath = rootURL.appendingPathComponent(".git/config")
+        guard let configContents = try? String(contentsOf: configPath, encoding: .utf8) else {
+            return nil
+        }
+
+        // Simple parser to find origin remote URL
+        var inOriginSection = false
+        for line in configContents.components(separatedBy: .newlines) {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            if trimmed == "[remote \"origin\"]" {
+                inOriginSection = true
+            } else if trimmed.hasPrefix("[") {
+                inOriginSection = false
+            } else if inOriginSection && trimmed.hasPrefix("url = ") {
+                return String(trimmed.dropFirst(6))
+            }
+        }
+        return nil
+    }
+
     /// Creates a new repository reference.
     /// - Parameter rootURL: The root directory URL of the Git repository.
     init(rootURL: URL) {

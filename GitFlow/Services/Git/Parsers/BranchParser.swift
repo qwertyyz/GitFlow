@@ -55,7 +55,9 @@ enum BranchParser {
                 commitHash: commitHash,
                 upstream: upstream,
                 ahead: ahead,
-                behind: behind
+                behind: behind,
+                lastCommitDate: nil,
+                isMerged: false
             )
 
             branches.append(branch)

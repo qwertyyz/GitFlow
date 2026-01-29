@@ -238,6 +238,154 @@ struct GitFlowApp: App {
                     .keyboardShortcut("f", modifiers: .command)
                 }
             }
+
+            // Stash commands
+            CommandMenu("Stash") {
+                Button("Stash Changes...") {
+                    appState.showCreateStash = true
+                }
+                .keyboardShortcut("s", modifiers: [.command, .shift])
+                .disabled(appState.currentRepository == nil)
+
+                Button("Apply Stash...") {
+                    appState.showApplyStash = true
+                }
+                .disabled(appState.currentRepository == nil)
+
+                Button("Pop Stash") {
+                    Task {
+                        await appState.repositoryViewModel?.popStash()
+                    }
+                }
+                .disabled(appState.currentRepository == nil)
+
+                Divider()
+
+                Button("Create Snapshot") {
+                    appState.showCreateSnapshot = true
+                }
+                .disabled(appState.currentRepository == nil)
+
+                Divider()
+
+                Button("Manage Stashes...") {
+                    appState.selectedSidebarItem = .stashes
+                }
+                .disabled(appState.currentRepository == nil)
+            }
+
+            // git-flow commands
+            CommandMenu("Git-Flow") {
+                Button("Initialize git-flow...") {
+                    appState.showGitFlowInit = true
+                }
+                .disabled(appState.currentRepository == nil || appState.isGitFlowInitialized)
+
+                Divider()
+
+                Menu("Feature") {
+                    Button("Start Feature...") {
+                        appState.showGitFlowStartFeature = true
+                    }
+                    Button("Finish Feature...") {
+                        appState.showGitFlowFinishFeature = true
+                    }
+                }
+                .disabled(appState.currentRepository == nil || !appState.isGitFlowInitialized)
+
+                Menu("Release") {
+                    Button("Start Release...") {
+                        appState.showGitFlowStartRelease = true
+                    }
+                    Button("Finish Release...") {
+                        appState.showGitFlowFinishRelease = true
+                    }
+                }
+                .disabled(appState.currentRepository == nil || !appState.isGitFlowInitialized)
+
+                Menu("Hotfix") {
+                    Button("Start Hotfix...") {
+                        appState.showGitFlowStartHotfix = true
+                    }
+                    Button("Finish Hotfix...") {
+                        appState.showGitFlowFinishHotfix = true
+                    }
+                }
+                .disabled(appState.currentRepository == nil || !appState.isGitFlowInitialized)
+            }
+
+            // Window commands
+            CommandGroup(after: .windowArrangement) {
+                Divider()
+
+                Button("New Window") {
+                    if let repo = appState.currentRepository {
+                        MultiWindowManager.shared.openInNewWindow(repository: repo)
+                    }
+                }
+                .keyboardShortcut("n", modifiers: [.command, .option])
+                .disabled(appState.currentRepository == nil)
+
+                Button("New Tab") {
+                    if let repo = appState.currentRepository {
+                        MultiWindowManager.shared.openInNewTab(repository: repo)
+                    }
+                }
+                .keyboardShortcut("t", modifiers: .command)
+                .disabled(appState.currentRepository == nil)
+
+                Divider()
+
+                Button("Tile Windows Horizontally") {
+                    MultiWindowManager.shared.tileWindowsHorizontally()
+                }
+                .keyboardShortcut("h", modifiers: [.command, .option, .control])
+
+                Button("Tile Windows Vertically") {
+                    MultiWindowManager.shared.tileWindowsVertically()
+                }
+                .keyboardShortcut("v", modifiers: [.command, .option, .control])
+            }
+
+            // Help commands
+            CommandGroup(replacing: .help) {
+                Button("GitFlow Documentation") {
+                    appState.showDocumentation = true
+                }
+
+                Button("Keyboard Shortcuts") {
+                    appState.showKeyboardShortcuts = true
+                }
+                .keyboardShortcut("/", modifiers: .command)
+
+                Divider()
+
+                Button("Video Tutorials") {
+                    appState.showVideoTutorials = true
+                }
+
+                Button("Learn Git") {
+                    appState.showLearnGit = true
+                }
+
+                Divider()
+
+                Button("What's New in GitFlow") {
+                    appState.showWhatsNew = true
+                }
+
+                Button("Getting Started Guide") {
+                    appState.showGettingStarted = true
+                }
+
+                Divider()
+
+                Button("Report an Issue...") {
+                    if let url = URL(string: "https://github.com/gitflow-app/gitflow/issues") {
+                        NSWorkspace.shared.open(url)
+                    }
+                }
+            }
         }
 
         Settings {

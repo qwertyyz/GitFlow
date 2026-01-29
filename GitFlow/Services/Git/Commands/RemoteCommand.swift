@@ -64,18 +64,36 @@ struct PullCommand: VoidGitCommand {
     }
 }
 
+/// Force mode options for git push.
+enum PushForceMode {
+    /// No force push - standard behavior.
+    case none
+    /// Force push with lease - safer, fails if remote has new commits.
+    case withLease
+    /// Full force push - dangerous, overwrites remote unconditionally.
+    case force
+}
+
 /// Command to push to remote.
 struct PushCommand: VoidGitCommand {
     let remote: String?
     let branch: String?
     let setUpstream: Bool
-    let force: Bool
+    let forceMode: PushForceMode
 
     init(remote: String? = nil, branch: String? = nil, setUpstream: Bool = false, force: Bool = false) {
         self.remote = remote
         self.branch = branch
         self.setUpstream = setUpstream
-        self.force = force
+        // For backwards compatibility, force: true maps to force-with-lease
+        self.forceMode = force ? .withLease : .none
+    }
+
+    init(remote: String? = nil, branch: String? = nil, setUpstream: Bool = false, forceMode: PushForceMode = .none) {
+        self.remote = remote
+        self.branch = branch
+        self.setUpstream = setUpstream
+        self.forceMode = forceMode
     }
 
     var arguments: [String] {
@@ -83,8 +101,13 @@ struct PushCommand: VoidGitCommand {
         if setUpstream {
             args.append("-u")
         }
-        if force {
+        switch forceMode {
+        case .none:
+            break
+        case .withLease:
             args.append("--force-with-lease")
+        case .force:
+            args.append("--force")
         }
         if let remote {
             args.append(remote)

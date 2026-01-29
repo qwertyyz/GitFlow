@@ -147,6 +147,12 @@ struct RepositoryView: View {
     @State private var selectedSection: SidebarSection = .changes
     @State private var showSettings: Bool = false
 
+    /// Navigation history for browser-style back/forward.
+    @StateObject private var navigationHistory = NavigationHistory()
+
+    /// Flag to prevent recording navigation when programmatically navigating.
+    @State private var isProgrammaticNavigation: Bool = false
+
     var body: some View {
         NavigationSplitView {
             Sidebar(
@@ -182,7 +188,24 @@ struct RepositoryView: View {
         }
         .navigationTitle(viewModel.repository.name)
         .toolbar {
+            // Navigation back/forward buttons
             ToolbarItemGroup(placement: .navigation) {
+                Button(action: goBack) {
+                    Image(systemName: "chevron.left")
+                }
+                .help("Back")
+                .disabled(!navigationHistory.canGoBack)
+                .keyboardShortcut("[", modifiers: .command)
+
+                Button(action: goForward) {
+                    Image(systemName: "chevron.right")
+                }
+                .help("Forward")
+                .disabled(!navigationHistory.canGoForward)
+                .keyboardShortcut("]", modifiers: .command)
+
+                Divider()
+
                 Button(action: {
                     appState.closeRepository()
                 }) {
@@ -191,16 +214,98 @@ struct RepositoryView: View {
                 .help("Change Repository")
             }
 
+            // Branch and sync operations
             ToolbarItemGroup(placement: .primaryAction) {
-                if let branch = viewModel.currentBranch {
+                // Branch selector dropdown
+                Menu {
+                    ForEach(viewModel.branchViewModel.localBranches, id: \.name) { branch in
+                        Button(branch.name) {
+                            Task { await viewModel.branchViewModel.checkout(branchName: branch.name) }
+                        }
+                    }
+
+                    Divider()
+
+                    Button("New Branch...") {
+                        appState.showNewBranch = true
+                    }
+                } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "arrow.triangle.branch")
-                        Text(branch)
+                        Text(viewModel.currentBranch ?? "No Branch")
                             .fontWeight(.medium)
+                        Image(systemName: "chevron.down")
+                            .font(.caption2)
                     }
-                    .padding(.leading, 4)
-                    .foregroundStyle(.secondary)
                 }
+                .help("Current branch - click to switch")
+
+                Divider()
+
+                // Fetch button
+                Button(action: {
+                    Task { await viewModel.fetch() }
+                }) {
+                    Image(systemName: "arrow.down.circle")
+                }
+                .help("Fetch from all remotes")
+                .disabled(viewModel.isLoading)
+
+                // Pull button
+                Button(action: {
+                    Task { await viewModel.pull() }
+                }) {
+                    HStack(spacing: 2) {
+                        Image(systemName: "arrow.down")
+                        if viewModel.branchViewModel.currentBranchBehind > 0 {
+                            Text("\(viewModel.branchViewModel.currentBranchBehind)")
+                                .font(.caption2)
+                        }
+                    }
+                }
+                .help("Pull changes from remote")
+                .disabled(viewModel.isLoading)
+
+                // Push button
+                Button(action: {
+                    Task { await viewModel.push() }
+                }) {
+                    HStack(spacing: 2) {
+                        Image(systemName: "arrow.up")
+                        if viewModel.branchViewModel.currentBranchAhead > 0 {
+                            Text("\(viewModel.branchViewModel.currentBranchAhead)")
+                                .font(.caption2)
+                        }
+                    }
+                }
+                .help("Push changes to remote")
+                .disabled(viewModel.isLoading)
+
+                // Sync button (Pull + Push)
+                Button(action: {
+                    Task {
+                        await viewModel.fetch()
+                        await viewModel.pull()
+                        await viewModel.push()
+                    }
+                }) {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                }
+                .help("Sync: Fetch, Pull, then Push")
+                .disabled(viewModel.isLoading)
+
+                Divider()
+
+                // Stash button
+                Button(action: {
+                    appState.showCreateStash = true
+                }) {
+                    Image(systemName: "tray.and.arrow.down")
+                }
+                .help("Stash changes")
+                .disabled(viewModel.statusViewModel.status.totalChangedFiles == 0)
+
+                Divider()
 
                 Button(action: {
                     Task { await viewModel.refresh() }
@@ -229,6 +334,37 @@ struct RepositoryView: View {
         .sheet(isPresented: $showSettings) {
             SettingsView(showDismissButton: true)
         }
+        .onChange(of: selectedSection) { newSection in
+            // Record navigation unless it's programmatic
+            if !isProgrammaticNavigation {
+                navigationHistory.push(section: newSection.rawValue)
+            }
+            isProgrammaticNavigation = false
+        }
+        .onAppear {
+            // Initialize navigation history with current section
+            navigationHistory.push(section: selectedSection.rawValue)
+        }
+    }
+
+    // MARK: - Navigation Methods
+
+    private func goBack() {
+        guard let state = navigationHistory.goBack(),
+              let section = SidebarSection(rawValue: state.section) else {
+            return
+        }
+        isProgrammaticNavigation = true
+        selectedSection = section
+    }
+
+    private func goForward() {
+        guard let state = navigationHistory.goForward(),
+              let section = SidebarSection(rawValue: state.section) else {
+            return
+        }
+        isProgrammaticNavigation = true
+        selectedSection = section
     }
 }
 

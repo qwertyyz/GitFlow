@@ -108,6 +108,8 @@ final class DiffViewModel: ObservableObject {
 
     /// Loads diff for a file status.
     func loadDiff(for fileStatus: FileStatus) async {
+        // Small yield to ensure we're not in a view update cycle
+        await Task.yield()
         isLoading = true
 
         do {
@@ -194,6 +196,8 @@ final class DiffViewModel: ObservableObject {
 
     /// Loads diff for a commit.
     func loadCommitDiff(for commitHash: String) async {
+        // Small yield to ensure we're not in a view update cycle
+        await Task.yield()
         isLoading = true
 
         do {

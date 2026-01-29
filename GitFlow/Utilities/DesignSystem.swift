@@ -291,3 +291,4 @@ extension Animation {
     /// Slower, more deliberate animation
     static let deliberate = Animation.easeInOut(duration: 0.35)
 }
+

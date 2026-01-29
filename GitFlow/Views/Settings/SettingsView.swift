@@ -27,6 +27,16 @@ struct SettingsView: View {
                         Label("General", systemImage: "gear")
                     }
 
+                AccountsSettingsView()
+                    .tabItem {
+                        Label("Accounts", systemImage: "person.crop.circle")
+                    }
+
+                AppearanceSettingsTab()
+                    .tabItem {
+                        Label("Appearance", systemImage: "paintbrush")
+                    }
+
                 DiffSettingsView()
                     .tabItem {
                         Label("Diff", systemImage: "text.alignleft")
@@ -36,14 +46,34 @@ struct SettingsView: View {
                     .tabItem {
                         Label("Git", systemImage: "chevron.left.forwardslash.chevron.right")
                     }
+
+                CommitTemplatesView()
+                    .tabItem {
+                        Label("Templates", systemImage: "doc.text")
+                    }
+
+                ExternalToolsSettingsTab()
+                    .tabItem {
+                        Label("External Tools", systemImage: "wrench.and.screwdriver")
+                    }
+
+                SecuritySettingsTab()
+                    .tabItem {
+                        Label("Security", systemImage: "lock.shield")
+                    }
+
+                AdvancedSettingsTab()
+                    .tabItem {
+                        Label("Advanced", systemImage: "slider.horizontal.3")
+                    }
             }
         }
-        .frame(width: 520, height: showDismissButton ? 470 : 420)
+        .frame(width: 650, height: showDismissButton ? 550 : 500)
     }
 }
 
 /// Theme options for the app.
-enum AppTheme: String, CaseIterable {
+enum AppTheme: String, CaseIterable, Codable {
     case system = "system"
     case light = "light"
     case dark = "dark"
@@ -268,6 +298,274 @@ struct GitSettingsView: View {
         } else {
             gitVersion = ""
         }
+    }
+}
+
+// MARK: - Accounts Settings Tab
+
+/// Service accounts management.
+struct AccountsSettingsView: View {
+    var body: some View {
+        Form {
+            Section("Connected Accounts") {
+                AccountRow(service: "GitHub", icon: "link.circle", isConnected: true)
+                AccountRow(service: "GitLab", icon: "g.circle", isConnected: false)
+                AccountRow(service: "Bitbucket", icon: "b.circle", isConnected: false)
+                AccountRow(service: "Azure DevOps", icon: "a.circle", isConnected: false)
+                AccountRow(service: "Gitea", icon: "leaf.circle", isConnected: false)
+                AccountRow(service: "Beanstalk", icon: "tree", isConnected: false)
+            }
+
+            Section {
+                Button("Add Account...") {
+                    // Show add account sheet
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .padding()
+    }
+}
+
+struct AccountRow: View {
+    let service: String
+    let icon: String
+    let isConnected: Bool
+
+    var body: some View {
+        HStack {
+            Image(systemName: icon)
+                .foregroundColor(isConnected ? .blue : .secondary)
+            Text(service)
+            Spacer()
+            if isConnected {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(.green)
+                Button("Disconnect") { }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+            } else {
+                Button("Connect") { }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
+            }
+        }
+    }
+}
+
+// MARK: - Appearance Settings Tab
+
+/// Extended appearance settings including syntax highlighting.
+struct AppearanceSettingsTab: View {
+    @AppStorage("com.gitflow.theme") private var theme: String = "system"
+    @AppStorage("com.gitflow.compactToolbar") private var compactToolbar: Bool = false
+    @AppStorage("com.gitflow.syntaxTheme") private var syntaxTheme: String = "default"
+
+    var body: some View {
+        Form {
+            Section("Theme") {
+                Picker("Appearance", selection: $theme) {
+                    Text("System").tag("system")
+                    Text("Light").tag("light")
+                    Text("Dark").tag("dark")
+                }
+                .pickerStyle(.segmented)
+            }
+
+            Section("Toolbar") {
+                Toggle("Compact toolbar", isOn: $compactToolbar)
+            }
+
+            Section("Syntax Highlighting") {
+                Picker("Theme", selection: $syntaxTheme) {
+                    Text("Default").tag("default")
+                    Text("Monokai").tag("monokai")
+                    Text("Solarized Light").tag("solarized-light")
+                    Text("Solarized Dark").tag("solarized-dark")
+                    Text("GitHub").tag("github")
+                    Text("Dracula").tag("dracula")
+                    Text("One Dark").tag("one-dark")
+                    Text("Nord").tag("nord")
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .padding()
+    }
+}
+
+// MARK: - External Tools Settings Tab
+
+/// External diff/merge/editor tool configuration.
+struct ExternalToolsSettingsTab: View {
+    @AppStorage("com.gitflow.externalDiffTool") private var diffTool: String = ""
+    @AppStorage("com.gitflow.externalMergeTool") private var mergeTool: String = ""
+    @AppStorage("com.gitflow.externalEditor") private var editor: String = ""
+
+    var body: some View {
+        Form {
+            Section("Diff Tool") {
+                Picker("External diff tool", selection: $diffTool) {
+                    Text("None (use built-in)").tag("")
+                    Text("FileMerge").tag("opendiff")
+                    Text("Kaleidoscope").tag("ksdiff")
+                    Text("Beyond Compare").tag("bcomp")
+                    Text("VS Code").tag("code --diff")
+                    Text("Custom...").tag("custom")
+                }
+            }
+
+            Section("Merge Tool") {
+                Picker("External merge tool", selection: $mergeTool) {
+                    Text("None (use built-in)").tag("")
+                    Text("FileMerge").tag("opendiff")
+                    Text("Kaleidoscope").tag("ksdiff")
+                    Text("Beyond Compare").tag("bcomp")
+                    Text("VS Code").tag("code --merge")
+                    Text("Custom...").tag("custom")
+                }
+            }
+
+            Section("Editor") {
+                Picker("External editor", selection: $editor) {
+                    Text("System Default").tag("")
+                    Text("VS Code").tag("code")
+                    Text("Sublime Text").tag("subl")
+                    Text("Atom").tag("atom")
+                    Text("TextMate").tag("mate")
+                    Text("Xcode").tag("xcode")
+                    Text("Custom...").tag("custom")
+                }
+            }
+
+            Section("Terminal") {
+                Button("Open in Terminal") {
+                    // Open terminal at current repo
+                }
+                .disabled(true)
+            }
+        }
+        .formStyle(.grouped)
+        .padding()
+    }
+}
+
+// MARK: - Security Settings Tab
+
+/// SSH and GPG key management.
+struct SecuritySettingsTab: View {
+    var body: some View {
+        Form {
+            Section("SSH Keys") {
+                HStack {
+                    Text("Manage SSH keys for authentication")
+                    Spacer()
+                    Button("Manage...") {
+                        // Show SSH keys view
+                    }
+                }
+
+                HStack {
+                    Image(systemName: "key.fill")
+                        .foregroundColor(.blue)
+                    Text("1Password SSH Agent")
+                    Spacer()
+                    Button("Configure...") {
+                        // Show 1Password SSH settings
+                    }
+                }
+            }
+
+            Section("GPG Keys") {
+                HStack {
+                    Text("Manage GPG keys for commit signing")
+                    Spacer()
+                    Button("Manage...") {
+                        // Show GPG keys view
+                    }
+                }
+
+                Toggle("Sign commits by default", isOn: .constant(false))
+            }
+
+            Section("User Profiles") {
+                HStack {
+                    Text("Manage committer identities")
+                    Spacer()
+                    Button("Manage...") {
+                        // Show user profiles view
+                    }
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .padding()
+    }
+}
+
+// MARK: - Advanced Settings Tab
+
+/// Advanced settings including LFS, environment variables, backup.
+struct AdvancedSettingsTab: View {
+    @AppStorage("com.gitflow.enableLFS") private var enableLFS: Bool = true
+    @AppStorage("com.gitflow.autoFetch") private var autoFetch: Bool = false
+    @AppStorage("com.gitflow.autoFetchInterval") private var autoFetchInterval: Int = 10
+
+    var body: some View {
+        Form {
+            Section("Git LFS") {
+                Toggle("Enable Git LFS support", isOn: $enableLFS)
+                Button("View LFS Objects...") {
+                    // Show LFS view
+                }
+                .disabled(!enableLFS)
+            }
+
+            Section("Auto-Fetch") {
+                Toggle("Automatically fetch from remotes", isOn: $autoFetch)
+                if autoFetch {
+                    Picker("Fetch interval", selection: $autoFetchInterval) {
+                        Text("Every 5 minutes").tag(5)
+                        Text("Every 10 minutes").tag(10)
+                        Text("Every 15 minutes").tag(15)
+                        Text("Every 30 minutes").tag(30)
+                    }
+                }
+            }
+
+            Section("Environment Variables") {
+                HStack {
+                    Text("Configure custom environment variables")
+                    Spacer()
+                    Button("Configure...") {
+                        // Show environment variables view
+                    }
+                }
+            }
+
+            Section("Keyboard Shortcuts") {
+                HStack {
+                    Text("Customize keyboard shortcuts")
+                    Spacer()
+                    Button("Customize...") {
+                        // Show keyboard shortcuts view
+                    }
+                }
+            }
+
+            Section("Backup & Restore") {
+                HStack {
+                    Button("Export Settings...") {
+                        // Export settings
+                    }
+                    Button("Import Settings...") {
+                        // Import settings
+                    }
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .padding()
     }
 }
 

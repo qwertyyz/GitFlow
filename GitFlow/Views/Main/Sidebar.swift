@@ -2,15 +2,35 @@ import SwiftUI
 
 /// Sidebar sections for navigation.
 enum SidebarSection: String, CaseIterable, Identifiable {
+    // Workspace
     case changes = "Changes"
+    case stashes = "Stashes"
+    case fileTree = "Files"
+
+    // Repository
     case history = "History"
     case branches = "Branches"
-    case stashes = "Stashes"
+    case branchesReview = "Branches Review"
+    case archivedBranches = "Archived Branches"
     case tags = "Tags"
-    case sync = "Sync"
-    case fileTree = "Files"
+    case reflog = "Reflog"
     case submodules = "Submodules"
+    case worktrees = "Worktrees"
+
+    // Remotes
+    case remotes = "Remotes"
+    case sync = "Sync"
+
+    // Pull Requests
+    case pullRequests = "Pull Requests"
+
+    // Service Integrations
     case github = "GitHub"
+    case gitlab = "GitLab"
+    case bitbucket = "Bitbucket"
+    case azureDevOps = "Azure DevOps"
+    case gitea = "Gitea"
+    case beanstalk = "Beanstalk"
 
     var id: String { rawValue }
 
@@ -19,25 +39,61 @@ enum SidebarSection: String, CaseIterable, Identifiable {
         case .changes: return "pencil.circle"
         case .history: return "clock"
         case .branches: return "arrow.triangle.branch"
+        case .branchesReview: return "eye"
+        case .archivedBranches: return "archivebox"
         case .stashes: return "tray.and.arrow.down"
         case .tags: return "tag"
+        case .reflog: return "clock.arrow.circlepath"
         case .sync: return "arrow.triangle.2.circlepath"
         case .fileTree: return "folder"
         case .submodules: return "shippingbox"
+        case .worktrees: return "rectangle.stack"
+        case .remotes: return "server.rack"
+        case .pullRequests: return "arrow.triangle.pull"
         case .github: return "link.circle"
+        case .gitlab: return "g.circle"
+        case .bitbucket: return "b.circle"
+        case .azureDevOps: return "a.circle"
+        case .gitea: return "leaf.circle"
+        case .beanstalk: return "tree"
+        }
+    }
+
+    /// Whether this section should be shown in the sidebar (some may be hidden based on configuration).
+    var isMainSection: Bool {
+        switch self {
+        case .changes, .stashes, .fileTree,
+             .history, .branches, .tags, .reflog, .submodules, .worktrees,
+             .remotes, .sync, .pullRequests,
+             .github:
+            return true
+        case .branchesReview, .archivedBranches,
+             .gitlab, .bitbucket, .azureDevOps, .gitea, .beanstalk:
+            return false // These are shown conditionally
         }
     }
 }
 
 /// Left sidebar navigation.
+/// Supports drag and drop for git operations.
 struct Sidebar: View {
     @Binding var selectedSection: SidebarSection
     @ObservedObject var viewModel: RepositoryViewModel
+
+    /// Coordinator for drag and drop operations.
+    @StateObject private var dragDropCoordinator = DragDropCoordinator()
+
+    /// State for showing create branch sheet from dropped commit.
+    @State private var commitForBranch: DraggableCommit?
+
+    /// State for showing create tag sheet from dropped commit.
+    @State private var commitForTag: DraggableCommit?
 
     var body: some View {
         List(selection: $selectedSection) {
             Section("Workspace") {
                 sidebarItem(for: .changes, badge: changesCountBadge)
+                    .dropTarget(.workingCopy, coordinator: dragDropCoordinator)
                 sidebarItem(for: .stashes, badge: stashCountBadge)
                 sidebarItem(for: .fileTree, badge: nil)
             }
@@ -45,17 +101,72 @@ struct Sidebar: View {
             Section("Repository") {
                 sidebarItem(for: .history, badge: nil)
                 sidebarItem(for: .branches, badge: branchCountBadge)
+                    .dropTarget(
+                        .branchesHeader,
+                        coordinator: dragDropCoordinator,
+                        onCommitDropNeedsUI: { commit in
+                            commitForBranch = commit
+                        }
+                    )
+                sidebarItem(for: .branchesReview, badge: nil)
+                sidebarItem(for: .archivedBranches, badge: archivedBranchCountBadge)
                 sidebarItem(for: .tags, badge: tagCountBadge)
-                sidebarItem(for: .submodules, badge: nil)
+                    .dropTarget(
+                        .tagsHeader,
+                        coordinator: dragDropCoordinator,
+                        onCommitDropNeedsUI: { commit in
+                            commitForTag = commit
+                        }
+                    )
+                sidebarItem(for: .reflog, badge: nil)
+                sidebarItem(for: .submodules, badge: submoduleCountBadge)
+                sidebarItem(for: .worktrees, badge: worktreeCountBadge)
             }
 
             Section("Remote") {
-                sidebarItem(for: .sync, badge: nil)
+                sidebarItem(for: .remotes, badge: remoteCountBadge)
+                    .dropTarget(.remotesSection, coordinator: dragDropCoordinator)
+                sidebarItem(for: .sync, badge: syncBadge)
+                sidebarItem(for: .pullRequests, badge: prCountBadge)
+                    .dropTarget(.pullRequests, coordinator: dragDropCoordinator)
+            }
+
+            Section("Services") {
                 sidebarItem(for: .github, badge: nil)
+                sidebarItem(for: .gitlab, badge: nil)
+                sidebarItem(for: .bitbucket, badge: nil)
+                sidebarItem(for: .azureDevOps, badge: nil)
+                sidebarItem(for: .gitea, badge: nil)
+                sidebarItem(for: .beanstalk, badge: nil)
             }
         }
         .listStyle(.sidebar)
         .navigationSplitViewColumnWidth(min: 220, ideal: 240, max: 300)
+        .onAppear {
+            dragDropCoordinator.repositoryViewModel = viewModel
+        }
+        .sheet(item: $commitForBranch) { commit in
+            CreateBranchFromCommitSheet(
+                viewModel: viewModel.branchViewModel,
+                commitHash: commit.hash,
+                commitSubject: commit.subject,
+                isPresented: .init(
+                    get: { commitForBranch != nil },
+                    set: { if !$0 { commitForBranch = nil } }
+                )
+            )
+        }
+        .sheet(item: $commitForTag) { commit in
+            CreateTagFromCommitSheet(
+                viewModel: viewModel.tagViewModel,
+                commitHash: commit.hash,
+                commitSubject: commit.subject,
+                isPresented: .init(
+                    get: { commitForTag != nil },
+                    set: { if !$0 { commitForTag = nil } }
+                )
+            )
+        }
     }
 
     @ViewBuilder
@@ -120,6 +231,180 @@ struct Sidebar: View {
                 .font(DSTypography.smallLabel())
                 .foregroundStyle(.secondary)
         )
+    }
+
+    private var archivedBranchCountBadge: AnyView? {
+        // Archived branch count - would come from BranchViewModel
+        return nil
+    }
+
+    private var submoduleCountBadge: AnyView? {
+        // Submodule count - would come from SubmoduleViewModel
+        return nil
+    }
+
+    private var worktreeCountBadge: AnyView? {
+        // Worktree count - would come from WorktreeViewModel
+        return nil
+    }
+
+    private var remoteCountBadge: AnyView? {
+        // Remote count - would come from RemoteViewModel
+        return nil
+    }
+
+    private var syncBadge: AnyView? {
+        // Shows ahead/behind counts
+        let ahead = viewModel.branchViewModel.currentBranchAhead
+        let behind = viewModel.branchViewModel.currentBranchBehind
+        guard ahead > 0 || behind > 0 else { return nil }
+
+        return AnyView(
+            HStack(spacing: 4) {
+                if behind > 0 {
+                    Text("↓\(behind)")
+                        .font(.caption2)
+                }
+                if ahead > 0 {
+                    Text("↑\(ahead)")
+                        .font(.caption2)
+                }
+            }
+            .foregroundStyle(.secondary)
+        )
+    }
+
+    private var prCountBadge: AnyView? {
+        // Pull request count - would come from GitHub/GitLab view models
+        return nil
+    }
+}
+
+// MARK: - Drag and Drop Helper Sheets
+
+/// Sheet for creating a branch from a dropped commit.
+struct CreateBranchFromCommitSheet: View {
+    @ObservedObject var viewModel: BranchViewModel
+    let commitHash: String
+    let commitSubject: String
+    @Binding var isPresented: Bool
+
+    @State private var branchName: String = ""
+
+    var body: some View {
+        VStack(spacing: DSSpacing.lg) {
+            Text("Create Branch")
+                .font(.headline)
+
+            VStack(alignment: .leading, spacing: DSSpacing.sm) {
+                Text("Create a new branch from commit:")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+
+                HStack {
+                    Text(String(commitHash.prefix(7)))
+                        .fontDesign(.monospaced)
+                    Text(commitSubject)
+                        .lineLimit(1)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(DSSpacing.sm)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(NSColor.controlBackgroundColor))
+                .cornerRadius(DSRadius.sm)
+
+                TextField("Branch name", text: $branchName)
+                    .textFieldStyle(.roundedBorder)
+            }
+
+            HStack {
+                Button("Cancel") {
+                    isPresented = false
+                }
+                .keyboardShortcut(.cancelAction)
+
+                Spacer()
+
+                Button("Create Branch") {
+                    Task {
+                        await viewModel.createBranch(name: branchName, startPoint: commitHash)
+                        isPresented = false
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .keyboardShortcut(.defaultAction)
+                .disabled(branchName.isEmpty || viewModel.isOperationInProgress)
+            }
+        }
+        .padding()
+        .frame(width: 400)
+    }
+}
+
+/// Sheet for creating a tag from a dropped commit.
+struct CreateTagFromCommitSheet: View {
+    @ObservedObject var viewModel: TagViewModel
+    let commitHash: String
+    let commitSubject: String
+    @Binding var isPresented: Bool
+
+    @State private var tagName: String = ""
+    @State private var tagMessage: String = ""
+
+    var body: some View {
+        VStack(spacing: DSSpacing.lg) {
+            Text("Create Tag")
+                .font(.headline)
+
+            VStack(alignment: .leading, spacing: DSSpacing.sm) {
+                Text("Create a new tag at commit:")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+
+                HStack {
+                    Text(String(commitHash.prefix(7)))
+                        .fontDesign(.monospaced)
+                    Text(commitSubject)
+                        .lineLimit(1)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(DSSpacing.sm)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(NSColor.controlBackgroundColor))
+                .cornerRadius(DSRadius.sm)
+
+                TextField("Tag name (e.g., v1.0.0)", text: $tagName)
+                    .textFieldStyle(.roundedBorder)
+
+                TextField("Message (optional)", text: $tagMessage)
+                    .textFieldStyle(.roundedBorder)
+            }
+
+            HStack {
+                Button("Cancel") {
+                    isPresented = false
+                }
+                .keyboardShortcut(.cancelAction)
+
+                Spacer()
+
+                Button("Create Tag") {
+                    Task {
+                        if tagMessage.isEmpty {
+                            await viewModel.createLightweightTag(name: tagName, commitHash: commitHash)
+                        } else {
+                            await viewModel.createAnnotatedTag(name: tagName, message: tagMessage, commitHash: commitHash)
+                        }
+                        isPresented = false
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .keyboardShortcut(.defaultAction)
+                .disabled(tagName.isEmpty || viewModel.isOperationInProgress)
+            }
+        }
+        .padding()
+        .frame(width: 400)
     }
 }
 

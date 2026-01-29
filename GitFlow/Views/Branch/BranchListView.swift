@@ -12,6 +12,9 @@ struct BranchListView: View {
     @State private var branchToCompare: Branch?
     @State private var branchToSetUpstream: Branch?
 
+    // Local selection state to avoid "Publishing changes from within view updates" warning
+    @State private var localSelectedBranch: Branch?
+
     var body: some View {
         VStack(spacing: 0) {
             // Header
@@ -73,7 +76,7 @@ struct BranchListView: View {
                     description: "No branches found in this repository"
                 )
             } else {
-                List(selection: $viewModel.selectedBranch) {
+                List(selection: $localSelectedBranch) {
                     // Local branches
                     Section("Local") {
                         ForEach(viewModel.localBranches) { branch in
@@ -99,6 +102,12 @@ struct BranchListView: View {
                     }
                 }
                 .listStyle(.inset)
+                .onChange(of: localSelectedBranch) { newValue in
+                    // Defer sync to view model to avoid "Publishing changes from within view updates"
+                    Task { @MainActor in
+                        viewModel.selectedBranch = newValue
+                    }
+                }
             }
         }
         .sheet(isPresented: $showCreateBranch) {

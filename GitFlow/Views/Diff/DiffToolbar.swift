@@ -6,6 +6,9 @@ struct DiffToolbar: View {
     var onSearchTap: (() -> Void)?
     @Binding var isFullscreen: Bool
 
+    // Local state to avoid "Publishing changes from within view updates" warning
+    @State private var localViewMode: DiffViewModel.ViewMode = .unified
+
     init(viewModel: DiffViewModel, onSearchTap: (() -> Void)? = nil, isFullscreen: Binding<Bool> = .constant(false)) {
         self.viewModel = viewModel
         self.onSearchTap = onSearchTap
@@ -67,7 +70,7 @@ struct DiffToolbar: View {
                     .frame(height: 16)
 
                 // View mode picker
-                Picker("View Mode", selection: $viewModel.viewMode) {
+                Picker("View Mode", selection: $localViewMode) {
                     ForEach(DiffViewModel.ViewMode.allCases) { mode in
                         Text(mode.rawValue).tag(mode)
                     }
@@ -75,6 +78,12 @@ struct DiffToolbar: View {
                 .pickerStyle(.segmented)
                 .labelsHidden()
                 .frame(width: 120)
+                .onChange(of: localViewMode) { newValue in
+                    // Defer sync to view model to avoid "Publishing changes from within view updates"
+                    Task { @MainActor in
+                        viewModel.viewMode = newValue
+                    }
+                }
 
                 // Line staging actions (shown when lines are selected)
                 if viewModel.canStageHunks || viewModel.canUnstageHunks {
@@ -201,6 +210,15 @@ struct DiffToolbar: View {
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
+        .onAppear {
+            localViewMode = viewModel.viewMode
+        }
+        .onChange(of: viewModel.viewMode) { newValue in
+            // Sync from view model to local state (for external changes)
+            if localViewMode != newValue {
+                localViewMode = newValue
+            }
+        }
     }
 }
 

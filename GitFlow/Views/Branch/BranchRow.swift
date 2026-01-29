@@ -1,8 +1,12 @@
 import SwiftUI
 
 /// Row displaying a single branch.
+/// Supports drag and drop for merge, rebase, and push operations.
 struct BranchRow: View {
     let branch: Branch
+
+    /// Whether to enable drag and drop (default true).
+    var enableDrag: Bool = true
 
     var body: some View {
         HStack(spacing: 8) {
@@ -59,6 +63,9 @@ struct BranchRow: View {
                 .foregroundStyle(.secondary)
         }
         .padding(.vertical, 2)
+        .applyIf(enableDrag) { view in
+            view.draggableBranch(branch)
+        }
     }
 }
 

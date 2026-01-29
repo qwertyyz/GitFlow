@@ -48,6 +48,63 @@ final class AppState: ObservableObject {
     /// Whether to show the diff search.
     @Published var showDiffSearch: Bool = false
 
+    /// Selected sidebar item for navigation.
+    @Published var selectedSidebarItem: SidebarSection? = nil
+
+    // MARK: - Stash UI State
+
+    /// Whether to show the apply stash sheet.
+    @Published var showApplyStash: Bool = false
+
+    /// Whether to show the create snapshot sheet.
+    @Published var showCreateSnapshot: Bool = false
+
+    // MARK: - Git-Flow UI State
+
+    /// Whether git-flow is initialized in the current repository.
+    @Published var isGitFlowInitialized: Bool = false
+
+    /// Whether to show the git-flow init sheet.
+    @Published var showGitFlowInit: Bool = false
+
+    /// Whether to show the start feature sheet.
+    @Published var showGitFlowStartFeature: Bool = false
+
+    /// Whether to show the finish feature sheet.
+    @Published var showGitFlowFinishFeature: Bool = false
+
+    /// Whether to show the start release sheet.
+    @Published var showGitFlowStartRelease: Bool = false
+
+    /// Whether to show the finish release sheet.
+    @Published var showGitFlowFinishRelease: Bool = false
+
+    /// Whether to show the start hotfix sheet.
+    @Published var showGitFlowStartHotfix: Bool = false
+
+    /// Whether to show the finish hotfix sheet.
+    @Published var showGitFlowFinishHotfix: Bool = false
+
+    // MARK: - Help UI State
+
+    /// Whether to show the documentation view.
+    @Published var showDocumentation: Bool = false
+
+    /// Whether to show the keyboard shortcuts view.
+    @Published var showKeyboardShortcuts: Bool = false
+
+    /// Whether to show the video tutorials view.
+    @Published var showVideoTutorials: Bool = false
+
+    /// Whether to show the learn git view.
+    @Published var showLearnGit: Bool = false
+
+    /// Whether to show the what's new dialog.
+    @Published var showWhatsNew: Bool = false
+
+    /// Whether to show the getting started guide.
+    @Published var showGettingStarted: Bool = false
+
     // MARK: - Services
 
     private let recentRepositoriesStore = RecentRepositoriesStore()

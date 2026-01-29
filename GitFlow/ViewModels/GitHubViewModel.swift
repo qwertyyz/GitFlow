@@ -9,6 +9,9 @@ final class GitHubViewModel: ObservableObject {
     /// GitHub repository info extracted from remotes.
     @Published private(set) var githubInfo: GitHubRemoteInfo?
 
+    /// Alias for githubInfo for API compatibility.
+    var remoteInfo: GitHubRemoteInfo? { githubInfo }
+
     /// Whether this repository is connected to GitHub.
     @Published private(set) var isGitHubRepository: Bool = false
 
@@ -45,11 +48,15 @@ final class GitHubViewModel: ObservableObject {
     /// Filter for issues/PRs state.
     @Published var stateFilter: StateFilter = .open
 
-    /// The GitHub token (stored in keychain ideally).
+    /// The GitHub token, securely stored in Keychain.
+    /// Setting this value automatically persists it to the Keychain.
     @Published var githubToken: String = "" {
         didSet {
+            // Persist token to Keychain whenever it changes
+            saveTokenToKeychain(githubToken)
+
             Task {
-                await gitHubService.setAuthToken(githubToken.isEmpty ? nil : githubToken)
+                await githubService.setAuthToken(githubToken.isEmpty ? nil : githubToken)
                 await validateAndLoadUser()
             }
         }
@@ -59,7 +66,9 @@ final class GitHubViewModel: ObservableObject {
 
     private let repository: Repository
     private let gitService: GitService
-    private let gitHubService: GitHubService
+    /// The GitHub service for API calls.
+    let githubService: GitHubService
+    private let keychainService: KeychainService
 
     // MARK: - Types
 
@@ -77,22 +86,46 @@ final class GitHubViewModel: ObservableObject {
 
     // MARK: - Initialization
 
-    init(repository: Repository, gitService: GitService, gitHubService: GitHubService = GitHubService()) {
+    init(
+        repository: Repository,
+        gitService: GitService,
+        githubService: GitHubService = GitHubService(),
+        keychainService: KeychainService = .shared
+    ) {
         self.repository = repository
         self.gitService = gitService
-        self.gitHubService = gitHubService
+        self.githubService = githubService
+        self.keychainService = keychainService
+
+        // Load saved token from Keychain on initialization
+        loadTokenFromKeychain()
     }
 
     // MARK: - Public Methods
 
     /// Initializes GitHub connection by detecting if this is a GitHub repo.
     func initialize() async {
-        githubInfo = await gitHubService.getGitHubInfo(for: repository, gitService: gitService)
+        githubInfo = await githubService.getGitHubInfo(for: repository, gitService: gitService)
         isGitHubRepository = githubInfo != nil
 
         if isGitHubRepository && !githubToken.isEmpty {
+            // Set the token on the service (it was loaded from Keychain in init)
+            await githubService.setAuthToken(githubToken)
             await validateAndLoadUser()
         }
+    }
+
+    /// Clears the saved token and logs out.
+    /// Removes the token from both memory and Keychain.
+    func logout() {
+        githubToken = ""
+        isAuthenticated = false
+        authenticatedUser = nil
+        issues = []
+        pullRequests = []
+
+        // Clear from Keychain
+        try? keychainService.delete(for: KeychainAccount.githubToken)
     }
 
     /// Validates the token and loads the authenticated user.
@@ -104,7 +137,7 @@ final class GitHubViewModel: ObservableObject {
         }
 
         do {
-            authenticatedUser = try await gitHubService.getAuthenticatedUser()
+            authenticatedUser = try await githubService.getAuthenticatedUser()
             isAuthenticated = true
         } catch {
             isAuthenticated = false
@@ -120,7 +153,7 @@ final class GitHubViewModel: ObservableObject {
         defer { isLoading = false }
 
         do {
-            let allIssues = try await gitHubService.getIssues(
+            let allIssues = try await githubService.getIssues(
                 owner: info.owner,
                 repo: info.repo,
                 state: stateFilter.rawValue
@@ -143,7 +176,7 @@ final class GitHubViewModel: ObservableObject {
         defer { isLoading = false }
 
         do {
-            pullRequests = try await gitHubService.getPullRequests(
+            pullRequests = try await githubService.getPullRequests(
                 owner: info.owner,
                 repo: info.repo,
                 state: stateFilter.rawValue
@@ -166,9 +199,9 @@ final class GitHubViewModel: ObservableObject {
 
         do {
             // Load reviews, comments, and checks in parallel
-            async let reviews = gitHubService.getReviews(owner: info.owner, repo: info.repo, pullNumber: pr.number)
-            async let comments = gitHubService.getComments(owner: info.owner, repo: info.repo, pullNumber: pr.number)
-            async let checks = gitHubService.getCheckRuns(owner: info.owner, repo: info.repo, ref: pr.head.sha)
+            async let reviews = githubService.getReviews(owner: info.owner, repo: info.repo, pullNumber: pr.number)
+            async let comments = githubService.getComments(owner: info.owner, repo: info.repo, pullNumber: pr.number)
+            async let checks = githubService.getCheckRuns(owner: info.owner, repo: info.repo, ref: pr.head.sha)
 
             selectedPRReviews = try await reviews
             selectedPRComments = try await comments
@@ -193,7 +226,7 @@ final class GitHubViewModel: ObservableObject {
     func openRepositoryInBrowser() {
         guard let info = githubInfo else { return }
         Task {
-            await gitHubService.openInBrowser(owner: info.owner, repo: info.repo)
+            await githubService.openInBrowser(owner: info.owner, repo: info.repo)
         }
     }
 
@@ -201,7 +234,7 @@ final class GitHubViewModel: ObservableObject {
     func openPullRequestInBrowser(_ pr: GitHubPullRequest) {
         guard let info = githubInfo else { return }
         Task {
-            await gitHubService.openPullRequestInBrowser(owner: info.owner, repo: info.repo, number: pr.number)
+            await githubService.openPullRequestInBrowser(owner: info.owner, repo: info.repo, number: pr.number)
         }
     }
 
@@ -209,7 +242,7 @@ final class GitHubViewModel: ObservableObject {
     func openIssueInBrowser(_ issue: GitHubIssue) {
         guard let info = githubInfo else { return }
         Task {
-            await gitHubService.openIssueInBrowser(owner: info.owner, repo: info.repo, number: issue.number)
+            await githubService.openIssueInBrowser(owner: info.owner, repo: info.repo, number: issue.number)
         }
     }
 
@@ -218,9 +251,9 @@ final class GitHubViewModel: ObservableObject {
         guard let info = githubInfo else { return }
         Task {
             if let base = baseBranch {
-                await gitHubService.openCompareInBrowser(owner: info.owner, repo: info.repo, base: base, head: branch)
+                await githubService.openCompareInBrowser(owner: info.owner, repo: info.repo, base: base, head: branch)
             } else {
-                let url = await gitHubService.newPullRequestURL(owner: info.owner, repo: info.repo, head: branch)
+                let url = await githubService.newPullRequestURL(owner: info.owner, repo: info.repo, head: branch)
                 NSWorkspace.shared.open(url)
             }
         }
@@ -230,7 +263,7 @@ final class GitHubViewModel: ObservableObject {
     func openActionsInBrowser() {
         guard let info = githubInfo else { return }
         Task {
-            await gitHubService.openActionsInBrowser(owner: info.owner, repo: info.repo)
+            await githubService.openActionsInBrowser(owner: info.owner, repo: info.repo)
         }
     }
 
@@ -265,5 +298,36 @@ final class GitHubViewModel: ObservableObject {
         }
 
         return parts.isEmpty ? "No open items" : parts.joined(separator: ", ")
+    }
+
+    // MARK: - Private Keychain Methods
+
+    /// Loads the GitHub token from Keychain.
+    /// Called during initialization to restore the saved token.
+    private func loadTokenFromKeychain() {
+        if let savedToken = keychainService.retrieve(for: KeychainAccount.githubToken) {
+            // Set without triggering didSet to avoid double-saving
+            // We'll set the service token in initialize()
+            githubToken = savedToken
+        }
+    }
+
+    /// Saves the GitHub token to Keychain.
+    /// Called whenever the token changes.
+    ///
+    /// - Parameter token: The token to save. If empty, deletes the stored token.
+    private func saveTokenToKeychain(_ token: String) {
+        if token.isEmpty {
+            // Remove token from Keychain when cleared
+            try? keychainService.delete(for: KeychainAccount.githubToken)
+        } else {
+            // Save or update token in Keychain
+            do {
+                try keychainService.save(token, for: KeychainAccount.githubToken)
+            } catch {
+                // Log error but don't fail - token still works in memory
+                print("Failed to save GitHub token to Keychain: \(error.localizedDescription)")
+            }
+        }
     }
 }
