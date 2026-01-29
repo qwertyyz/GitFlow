@@ -11,6 +11,7 @@ struct VirtualizedDiffView: View {
     var wrapLines: Bool = false
 
     @Environment(\.colorScheme) private var colorScheme
+    @AppStorage("com.gitflow.fontSize") private var fontSize: Double = 12.0
 
     /// All lines flattened for virtualization.
     private var allLines: [(hunkIndex: Int, line: DiffLine)] {
@@ -69,7 +70,7 @@ struct VirtualizedDiffView: View {
             }
         }
         .background(Color(NSColor.textBackgroundColor))
-        .font(DSTypography.code())
+        .font(DSTypography.code(size: fontSize))
     }
 
     private var visibleLines: [(hunkIndex: Int, line: DiffLine)] {

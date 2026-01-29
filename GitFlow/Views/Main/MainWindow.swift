@@ -153,6 +153,9 @@ struct RepositoryView: View {
     /// Flag to prevent recording navigation when programmatically navigating.
     @State private var isProgrammaticNavigation: Bool = false
 
+    /// Compact toolbar setting
+    @AppStorage("com.gitflow.compactToolbar") private var compactToolbar: Bool = false
+
     var body: some View {
         NavigationSplitView {
             Sidebar(
@@ -192,6 +195,7 @@ struct RepositoryView: View {
             ToolbarItemGroup(placement: .navigation) {
                 Button(action: goBack) {
                     Image(systemName: "chevron.left")
+                        .font(compactToolbar ? .caption : .body)
                 }
                 .tooltip("Back")
                 .disabled(!navigationHistory.canGoBack)
@@ -199,6 +203,7 @@ struct RepositoryView: View {
 
                 Button(action: goForward) {
                     Image(systemName: "chevron.right")
+                        .font(compactToolbar ? .caption : .body)
                 }
                 .tooltip("Forward")
                 .disabled(!navigationHistory.canGoForward)
@@ -210,6 +215,7 @@ struct RepositoryView: View {
                     appState.closeRepository()
                 }) {
                     Image(systemName: "folder")
+                        .font(compactToolbar ? .caption : .body)
                 }
                 .tooltip("Change Repository")
             }
@@ -230,10 +236,13 @@ struct RepositoryView: View {
                         appState.showNewBranch = true
                     }
                 } label: {
-                    HStack(spacing: 4) {
+                    HStack(spacing: compactToolbar ? 2 : 4) {
                         Image(systemName: "arrow.triangle.branch")
-                        Text(viewModel.currentBranch ?? "No Branch")
-                            .fontWeight(.medium)
+                            .font(compactToolbar ? .caption : .body)
+                        if !compactToolbar {
+                            Text(viewModel.currentBranch ?? "No Branch")
+                                .fontWeight(.medium)
+                        }
                         Image(systemName: "chevron.down")
                             .font(.caption2)
                     }
@@ -247,6 +256,7 @@ struct RepositoryView: View {
                     Task { await viewModel.fetch() }
                 }) {
                     Image(systemName: "arrow.down.circle")
+                        .font(compactToolbar ? .caption : .body)
                 }
                 .tooltip("Fetch from all remotes")
                 .disabled(viewModel.isLoading)
@@ -255,11 +265,12 @@ struct RepositoryView: View {
                 Button(action: {
                     Task { await viewModel.pull() }
                 }) {
-                    HStack(spacing: 2) {
+                    HStack(spacing: compactToolbar ? 1 : 2) {
                         Image(systemName: "arrow.down")
+                            .font(compactToolbar ? .caption : .body)
                         if viewModel.branchViewModel.currentBranchBehind > 0 {
                             Text("\(viewModel.branchViewModel.currentBranchBehind)")
-                                .font(.caption2)
+                                .font(compactToolbar ? .system(size: 9) : .caption2)
                         }
                     }
                 }
@@ -270,11 +281,12 @@ struct RepositoryView: View {
                 Button(action: {
                     Task { await viewModel.push() }
                 }) {
-                    HStack(spacing: 2) {
+                    HStack(spacing: compactToolbar ? 1 : 2) {
                         Image(systemName: "arrow.up")
+                            .font(compactToolbar ? .caption : .body)
                         if viewModel.branchViewModel.currentBranchAhead > 0 {
                             Text("\(viewModel.branchViewModel.currentBranchAhead)")
-                                .font(.caption2)
+                                .font(compactToolbar ? .system(size: 9) : .caption2)
                         }
                     }
                 }
@@ -290,6 +302,7 @@ struct RepositoryView: View {
                     }
                 }) {
                     Image(systemName: "arrow.triangle.2.circlepath")
+                        .font(compactToolbar ? .caption : .body)
                 }
                 .tooltip("Sync (Fetch, Pull, Push)")
                 .disabled(viewModel.isLoading)
@@ -301,6 +314,7 @@ struct RepositoryView: View {
                     appState.showCreateStash = true
                 }) {
                     Image(systemName: "tray.and.arrow.down")
+                        .font(compactToolbar ? .caption : .body)
                 }
                 .tooltip("Stash changes")
                 .disabled(viewModel.statusViewModel.status.totalChangedFiles == 0)
@@ -311,6 +325,7 @@ struct RepositoryView: View {
                     Task { await viewModel.refresh() }
                 }) {
                     Image(systemName: "arrow.clockwise")
+                        .font(compactToolbar ? .caption : .body)
                 }
                 .tooltip("Refresh")
                 .disabled(viewModel.isLoading)
@@ -319,6 +334,7 @@ struct RepositoryView: View {
                     showSettings = true
                 }) {
                     Image(systemName: "gearshape")
+                        .font(compactToolbar ? .caption : .body)
                 }
                 .tooltip("Settings")
             }

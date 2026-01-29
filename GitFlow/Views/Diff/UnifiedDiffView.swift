@@ -18,6 +18,7 @@ struct UnifiedDiffView: View {
     var onToggleLineSelection: ((String) -> Void)?
 
     @Environment(\.colorScheme) private var colorScheme
+    @AppStorage("com.gitflow.fontSize") private var fontSize: Double = 12.0
     @State private var matchLocations: [MatchLocation] = []
 
     init(
@@ -78,7 +79,7 @@ struct UnifiedDiffView: View {
                             .frame(minWidth: geometry.size.width, alignment: .leading)
                         }
                     }
-                    .font(DSTypography.code())
+                    .font(DSTypography.code(size: fontSize))
                 }
                 .onChange(of: currentMatchIndex) { newIndex in
                     if newIndex < matchLocations.count {

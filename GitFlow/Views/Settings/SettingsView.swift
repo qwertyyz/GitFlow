@@ -644,7 +644,9 @@ struct AddAccountSheet: View {
 struct AppearanceSettingsTab: View {
     @AppStorage("com.gitflow.theme") private var theme: String = "system"
     @AppStorage("com.gitflow.compactToolbar") private var compactToolbar: Bool = false
-    @AppStorage("com.gitflow.syntaxTheme") private var syntaxTheme: String = "default"
+    @AppStorage("currentSyntaxTheme") private var syntaxTheme: String = "github-light"
+
+    @State private var showSyntaxHighlightingSettings = false
 
     var body: some View {
         Form {
@@ -655,27 +657,42 @@ struct AppearanceSettingsTab: View {
                     Text("Dark").tag("dark")
                 }
                 .pickerStyle(.segmented)
+                .onChange(of: theme) { newValue in
+                    applyTheme(newValue)
+                }
             }
 
             Section("Toolbar") {
                 Toggle("Compact toolbar", isOn: $compactToolbar)
+                Text("Reduces toolbar button size and spacing.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             Section("Syntax Highlighting") {
                 Picker("Theme", selection: $syntaxTheme) {
-                    Text("Default").tag("default")
-                    Text("Monokai").tag("monokai")
-                    Text("Solarized Light").tag("solarized-light")
-                    Text("Solarized Dark").tag("solarized-dark")
-                    Text("GitHub").tag("github")
-                    Text("Dracula").tag("dracula")
+                    Text("GitHub Light").tag("github-light")
+                    Text("Xcode Light").tag("xcode-light")
+                    Text("GitHub Dark").tag("github-dark")
                     Text("One Dark").tag("one-dark")
-                    Text("Nord").tag("nord")
+                    Text("Monokai").tag("monokai")
+                    Text("Dracula").tag("dracula")
+                }
+                .onChange(of: syntaxTheme) { _ in
+                    NotificationCenter.default.post(name: .syntaxThemeChanged, object: nil)
+                }
+
+                Button("Advanced Settings...") {
+                    showSyntaxHighlightingSettings = true
                 }
             }
         }
         .formStyle(.grouped)
         .padding()
+        .sheet(isPresented: $showSyntaxHighlightingSettings) {
+            SyntaxHighlightingSettingsView()
+                .frame(width: 700, height: 500)
+        }
     }
 }
 

@@ -6,6 +6,7 @@ struct SplitDiffView: View {
     let showLineNumbers: Bool
     var searchText: String = ""
 
+    @AppStorage("com.gitflow.fontSize") private var fontSize: Double = 12.0
     @State private var scrollPosition: CGFloat = 0
 
     var body: some View {
@@ -21,8 +22,7 @@ struct SplitDiffView: View {
                     }
                 }
                 .frame(minWidth: geometry.size.width, alignment: .leading)
-                .fontDesign(.monospaced)
-                .font(.system(size: 12))
+                .font(DSTypography.code(size: fontSize))
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

@@ -10,7 +10,6 @@ struct CommitCreationView: View {
     @State private var showAuthorSheet: Bool = false
     @State private var showTemplatePicker: Bool = false
     @State private var selectedTemplate: CommitTemplate?
-    @State private var showPlaceholderSheet: Bool = false
     @StateObject private var templateStore = TemplatePickerStore()
 
     var body: some View {
@@ -218,16 +217,17 @@ struct CommitCreationView: View {
         .sheet(isPresented: $showAuthorSheet) {
             AuthorOverrideSheet(viewModel: viewModel, isPresented: $showAuthorSheet)
         }
-        .sheet(isPresented: $showPlaceholderSheet) {
-            if let template = selectedTemplate {
-                TemplatePlaceholderSheet(
-                    template: template,
-                    isPresented: $showPlaceholderSheet,
-                    onApply: { content in
-                        viewModel.commitMessage = content
-                    }
-                )
-            }
+        .sheet(item: $selectedTemplate) { template in
+            TemplatePlaceholderSheet(
+                template: template,
+                isPresented: .init(
+                    get: { selectedTemplate != nil },
+                    set: { if !$0 { selectedTemplate = nil } }
+                ),
+                onApply: { content in
+                    viewModel.commitMessage = content
+                }
+            )
         }
         .task {
             await viewModel.loadInitialData()
@@ -239,7 +239,6 @@ struct CommitCreationView: View {
         Task { @MainActor in
             if template.hasPlaceholders {
                 selectedTemplate = template
-                showPlaceholderSheet = true
             } else {
                 viewModel.commitMessage = template.content
             }
