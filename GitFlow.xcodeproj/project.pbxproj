@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		/* Swift Package Dependencies */
+		FWBUILD001 /* SwiftSyntax in Frameworks */ = {isa = PBXBuildFile; productRef = SWIFTPKG001 /* SwiftSyntax */; };
+		FWBUILD002 /* SwiftParser in Frameworks */ = {isa = PBXBuildFile; productRef = SWIFTPKG002 /* SwiftParser */; };
+
 		/* App files */
 		APPENTRY001 /* GitFlowApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = APPFILE001 /* GitFlowApp.swift */; };
 		APPENTRY002 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = APPFILE002 /* AppState.swift */; };
@@ -43,6 +47,9 @@
 		MODEL030 /* ExternalTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = MODELFILE030 /* ExternalTool.swift */; };
 		MODEL032 /* Gitmoji.swift in Sources */ = {isa = PBXBuildFile; fileRef = MODELFILE032 /* Gitmoji.swift */; };
 		MODEL033 /* SSHKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = MODELFILE033 /* SSHKey.swift */; };
+		MODEL034 /* CommitAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = MODELFILE034 /* CommitAnalysis.swift */; };
+		MODEL035 /* ChangeImpactAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = MODELFILE035 /* ChangeImpactAnalysis.swift */; };
+		MODEL036 /* SemanticEquivalence.swift in Sources */ = {isa = PBXBuildFile; fileRef = MODELFILE036 /* SemanticEquivalence.swift */; };
 
 		/* Services */
 		SVC001 /* GitExecutor.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVCFILE001 /* GitExecutor.swift */; };
@@ -84,6 +91,7 @@
 		SVC037 /* RepositoryGroupStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVCFILE037 /* RepositoryGroupStore.swift */; };
 		SVC038 /* ArchivedBranchStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVCFILE038 /* ArchivedBranchStore.swift */; };
 		SVC039 /* CommitTemplateStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVCFILE039 /* CommitTemplateStore.swift */; };
+		SVC040 /* SwiftStructureParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVCFILE040 /* SwiftStructureParser.swift */; };
 
 		/* ViewModels */
 		VM001 /* RepositoryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = VMFILE001 /* RepositoryViewModel.swift */; };
@@ -178,6 +186,11 @@
 		VIEW070 /* KeyboardShortcutsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE070 /* KeyboardShortcutsView.swift */; };
 		VIEW071 /* LearningResourcesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE071 /* LearningResourcesView.swift */; };
 		VIEW072 /* WhatsNewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE072 /* WhatsNewView.swift */; };
+		VIEW073 /* CommitSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE073 /* CommitSummaryView.swift */; };
+		VIEW074 /* WordDiffLineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE074 /* WordDiffLineView.swift */; };
+		VIEW075 /* StructuralDiffView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE075 /* StructuralDiffView.swift */; };
+		VIEW076 /* SemanticEquivalenceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE076 /* SemanticEquivalenceView.swift */; };
+		VIEW077 /* ChangeImpactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = VIEWFILE077 /* ChangeImpactView.swift */; };
 
 		/* Utilities */
 		UTIL001 /* String+Git.swift in Sources */ = {isa = PBXBuildFile; fileRef = UTILFILE001 /* String+Git.swift */; };
@@ -185,15 +198,18 @@
 		UTIL003 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = UTILFILE003 /* Constants.swift */; };
 		UTIL004 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = UTILFILE004 /* DesignSystem.swift */; };
 		UTIL005 /* KeyboardShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = UTILFILE005 /* KeyboardShortcuts.swift */; };
-		UTIL006 /* WordDiff.swift in Sources */ = {isa = PBXBuildFile; fileRef = UTILFILE006 /* WordDiff.swift */; };
 		UTIL007 /* AdvancedDragDropHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = UTILFILE007 /* AdvancedDragDropHandler.swift */; };
 		UTIL008 /* DragDropCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = UTILFILE008 /* DragDropCoordinator.swift */; };
 		UTIL009 /* NavigationHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = UTILFILE009 /* NavigationHistory.swift */; };
 		UTIL010 /* View+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = UTILFILE010 /* View+Extensions.swift */; };
+		UTIL011 /* WordDiff.swift in Sources */ = {isa = PBXBuildFile; fileRef = UTILFILE011 /* WordDiff.swift */; };
 
 		BASEVM001 /* BaseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BASEVMFILE001 /* BaseViewModel.swift */; };
 		BINDEXT001 /* Binding+Optional.swift in Sources */ = {isa = PBXBuildFile; fileRef = BINDEXTFILE001 /* Binding+Optional.swift */; };
 		LISTHDR001 /* ListHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = LISTHDRFILE001 /* ListHeaderView.swift */; };
+
+		NOISE001 /* NoiseSuppressionOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = NOISEFILE001 /* NoiseSuppressionOptions.swift */; };
+		DIFFTREE001 /* DiffFileTreeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DIFFTREEFILE001 /* DiffFileTreeView.swift */; };
 
 		/* Resources */
 		RES001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = RESFILE001 /* Assets.xcassets */; };
@@ -263,6 +279,9 @@
 		MODELFILE030 /* ExternalTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalTool.swift; sourceTree = "<group>"; };
 		MODELFILE032 /* Gitmoji.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gitmoji.swift; sourceTree = "<group>"; };
 		MODELFILE033 /* SSHKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHKey.swift; sourceTree = "<group>"; };
+		MODELFILE034 /* CommitAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommitAnalysis.swift; sourceTree = "<group>"; };
+		MODELFILE035 /* ChangeImpactAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangeImpactAnalysis.swift; sourceTree = "<group>"; };
+		MODELFILE036 /* SemanticEquivalence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SemanticEquivalence.swift; sourceTree = "<group>"; };
 
 		/* Services */
 		SVCFILE001 /* GitExecutor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitExecutor.swift; sourceTree = "<group>"; };
@@ -304,6 +323,7 @@
 		SVCFILE037 /* RepositoryGroupStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepositoryGroupStore.swift; sourceTree = "<group>"; };
 		SVCFILE038 /* ArchivedBranchStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchivedBranchStore.swift; sourceTree = "<group>"; };
 		SVCFILE039 /* CommitTemplateStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommitTemplateStore.swift; sourceTree = "<group>"; };
+		SVCFILE040 /* SwiftStructureParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftStructureParser.swift; sourceTree = "<group>"; };
 
 		/* ViewModels */
 		VMFILE001 /* RepositoryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepositoryViewModel.swift; sourceTree = "<group>"; };
@@ -398,6 +418,11 @@
 		VIEWFILE070 /* KeyboardShortcutsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardShortcutsView.swift; sourceTree = "<group>"; };
 		VIEWFILE071 /* LearningResourcesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningResourcesView.swift; sourceTree = "<group>"; };
 		VIEWFILE072 /* WhatsNewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhatsNewView.swift; sourceTree = "<group>"; };
+		VIEWFILE073 /* CommitSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommitSummaryView.swift; sourceTree = "<group>"; };
+		VIEWFILE074 /* WordDiffLineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordDiffLineView.swift; sourceTree = "<group>"; };
+		VIEWFILE075 /* StructuralDiffView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StructuralDiffView.swift; sourceTree = "<group>"; };
+		VIEWFILE076 /* SemanticEquivalenceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SemanticEquivalenceView.swift; sourceTree = "<group>"; };
+		VIEWFILE077 /* ChangeImpactView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangeImpactView.swift; sourceTree = "<group>"; };
 
 		/* Utilities */
 		UTILFILE001 /* String+Git.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Git.swift"; sourceTree = "<group>"; };
@@ -405,15 +430,18 @@
 		UTILFILE003 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		UTILFILE004 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
 		UTILFILE005 /* KeyboardShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardShortcuts.swift; sourceTree = "<group>"; };
-		UTILFILE006 /* WordDiff.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordDiff.swift; sourceTree = "<group>"; };
 		UTILFILE007 /* AdvancedDragDropHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvancedDragDropHandler.swift; sourceTree = "<group>"; };
 		UTILFILE008 /* DragDropCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DragDropCoordinator.swift; sourceTree = "<group>"; };
 		UTILFILE009 /* NavigationHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationHistory.swift; sourceTree = "<group>"; };
 		UTILFILE010 /* View+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+Extensions.swift"; sourceTree = "<group>"; };
+		UTILFILE011 /* WordDiff.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordDiff.swift; sourceTree = "<group>"; };
 
 		BASEVMFILE001 /* BaseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseViewModel.swift; sourceTree = "<group>"; };
 		BINDEXTFILE001 /* Binding+Optional.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Binding+Optional.swift"; sourceTree = "<group>"; };
 		LISTHDRFILE001 /* ListHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListHeaderView.swift; sourceTree = "<group>"; };
+
+		NOISEFILE001 /* NoiseSuppressionOptions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoiseSuppressionOptions.swift; sourceTree = "<group>"; };
+		DIFFTREEFILE001 /* DiffFileTreeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffFileTreeView.swift; sourceTree = "<group>"; };
 
 		/* Resources */
 		RESFILE001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -490,10 +518,13 @@
 		MODELGROUP /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				NOISEFILE001 /* NoiseSuppressionOptions.swift */,
 				MODELFILE027 /* ArchivedBranch.swift */,
 				MODELFILE003 /* Branch.swift */,
+				MODELFILE035 /* ChangeImpactAnalysis.swift */,
 				MODELFILE014 /* CommandPalette.swift */,
 				MODELFILE004 /* Commit.swift */,
+				MODELFILE034 /* CommitAnalysis.swift */,
 				MODELFILE015 /* CommitGraph.swift */,
 				MODELFILE029 /* CommitTemplate.swift */,
 				MODELFILE009 /* DiffHunk.swift */,
@@ -515,6 +546,7 @@
 				MODELFILE012 /* Remote.swift */,
 				MODELFILE002 /* Repository.swift */,
 				MODELFILE021 /* RepositoryManager.swift */,
+				MODELFILE036 /* SemanticEquivalence.swift */,
 				MODELFILE033 /* SSHKey.swift */,
 				MODELFILE011 /* Stash.swift */,
 				MODELFILE022 /* Submodule.swift */,
@@ -632,13 +664,19 @@
 		VIEWDIFFGROUP /* Diff */ = {
 			isa = PBXGroup;
 			children = (
+				VIEWFILE077 /* ChangeImpactView.swift */,
+				VIEWFILE073 /* CommitSummaryView.swift */,
+				DIFFTREEFILE001 /* DiffFileTreeView.swift */,
 				VIEWFILE014 /* DiffFileHeader.swift */,
 				VIEWFILE013 /* DiffToolbar.swift */,
 				VIEWFILE010 /* DiffView.swift */,
 				VIEWFILE054 /* ImageDiffView.swift */,
+				VIEWFILE076 /* SemanticEquivalenceView.swift */,
 				VIEWFILE012 /* SplitDiffView.swift */,
+				VIEWFILE075 /* StructuralDiffView.swift */,
 				VIEWFILE011 /* UnifiedDiffView.swift */,
 				VIEWFILE037 /* VirtualizedDiffView.swift */,
+				VIEWFILE074 /* WordDiffLineView.swift */,
 			);
 			path = Diff;
 			sourceTree = "<group>";
@@ -942,6 +980,7 @@
 				SVCFILE020 /* RemoteParser.swift */,
 				SVCFILE019 /* StashParser.swift */,
 				SVCFILE010 /* StatusParser.swift */,
+				SVCFILE040 /* SwiftStructureParser.swift */,
 				SVCFILE021 /* TagParser.swift */,
 			);
 			path = Parsers;
@@ -989,7 +1028,7 @@
 				UTILFILE005 /* KeyboardShortcuts.swift */,
 				UTILFILE009 /* NavigationHistory.swift */,
 				UTILFILE010 /* View+Extensions.swift */,
-				UTILFILE006 /* WordDiff.swift */,
+				UTILFILE011 /* WordDiff.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -1122,12 +1161,25 @@
 		};
 /* End PBXGroup section */
 
+/* Begin PBXFrameworksBuildPhase section */
+		FRAMEWORKS001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FWBUILD001 /* SwiftSyntax in Frameworks */,
+				FWBUILD002 /* SwiftParser in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
 /* Begin PBXNativeTarget section */
 		TARGET001 /* GitFlow */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = CONFIGLIST001 /* Build configuration list for PBXNativeTarget "GitFlow" */;
 			buildPhases = (
 				SOURCES001 /* Sources */,
+				FRAMEWORKS001 /* Frameworks */,
 				RESOURCES001 /* Resources */,
 			);
 			buildRules = (
@@ -1135,6 +1187,10 @@
 			dependencies = (
 			);
 			name = GitFlow;
+			packageProductDependencies = (
+				SWIFTPKG001 /* SwiftSyntax */,
+				SWIFTPKG002 /* SwiftParser */,
+			);
 			productName = GitFlow;
 			productReference = PRODUCT001 /* GitFlow.app */;
 			productType = "com.apple.product-type.application";
@@ -1163,6 +1219,9 @@
 				Base,
 			);
 			mainGroup = ROOT000;
+			packageReferences = (
+				PKGREF001 /* XCRemoteSwiftPackageReference "swift-syntax" */,
+			);
 			productRefGroup = GROUP002 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -1355,11 +1414,11 @@
 				UTIL003 /* Constants.swift in Sources */,
 				UTIL004 /* DesignSystem.swift in Sources */,
 				UTIL005 /* KeyboardShortcuts.swift in Sources */,
-				UTIL006 /* WordDiff.swift in Sources */,
 				UTIL007 /* AdvancedDragDropHandler.swift in Sources */,
 				UTIL008 /* DragDropCoordinator.swift in Sources */,
 				UTIL009 /* NavigationHistory.swift in Sources */,
 				UTIL010 /* View+Extensions.swift in Sources */,
+				UTIL011 /* WordDiff.swift in Sources */,
 				ADD200 /* AutoStashService.swift in Sources */,
 				ADD201 /* NotificationService.swift in Sources */,
 				ADD202 /* SpotlightService.swift in Sources */,
@@ -1388,6 +1447,17 @@
 				BASEVM001 /* BaseViewModel.swift in Sources */,
 				BINDEXT001 /* Binding+Optional.swift in Sources */,
 				LISTHDR001 /* ListHeaderView.swift in Sources */,
+				NOISE001 /* NoiseSuppressionOptions.swift in Sources */,
+				DIFFTREE001 /* DiffFileTreeView.swift in Sources */,
+				MODEL034 /* CommitAnalysis.swift in Sources */,
+				VIEW073 /* CommitSummaryView.swift in Sources */,
+				VIEW074 /* WordDiffLineView.swift in Sources */,
+				MODEL035 /* ChangeImpactAnalysis.swift in Sources */,
+				MODEL036 /* SemanticEquivalence.swift in Sources */,
+				SVC040 /* SwiftStructureParser.swift in Sources */,
+				VIEW075 /* StructuralDiffView.swift in Sources */,
+				VIEW076 /* SemanticEquivalenceView.swift in Sources */,
+				VIEW077 /* ChangeImpactView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1585,6 +1655,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		PKGREF001 /* XCRemoteSwiftPackageReference "swift-syntax" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/swiftlang/swift-syntax.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 509.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		SWIFTPKG001 /* SwiftSyntax */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = PKGREF001 /* XCRemoteSwiftPackageReference "swift-syntax" */;
+			productName = SwiftSyntax;
+		};
+		SWIFTPKG002 /* SwiftParser */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = PKGREF001 /* XCRemoteSwiftPackageReference "swift-syntax" */;
+			productName = SwiftParser;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = PROJECT001 /* Project object */;
 }

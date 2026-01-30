@@ -1,6 +1,6 @@
 # GitFlow
 
-A free, professional-grade Git GUI for macOS with best-in-class diff visualization and full GitTower feature parity.
+A Git GUI for macOS with the most advanced diff visualization engine. Powered by SwiftSyntax for structural code analysis, semantic equivalence detection, and change impact analysis.
 
 [![Release](https://img.shields.io/github/v/release/Nicolas-Arsenault/GitFlow)](https://github.com/Nicolas-Arsenault/GitFlow/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -40,18 +40,21 @@ brew install --cask gitflow-gui
 
 ## Features
 
+### Advanced Diff Engine (Powered by SwiftSyntax)
+- **Structural Diffs** — See added, modified, and removed functions, classes, and methods—not just lines
+- **Semantic Equivalence** — Detect when changes are just reformatting, reordering, or renaming
+- **Change Impact Analysis** — Understand how changes propagate through your codebase
+- **Word-Level Highlighting** — Smart tokenization shows exactly what changed within each line
+- **Unified & Split Views** — Toggle between single-column and side-by-side diffs
+- **Syntax Highlighting** — Language-aware highlighting for 200+ languages
+- **Image Diffing** — Visual comparison for PNG, JPG, and other image formats
+- **Virtualized Rendering** — Smooth performance even with 5000+ line diffs
+
 ### Core Git Operations
 - **Working Tree Status** — View staged, unstaged, and untracked files with visual indicators
 - **Staging** — Stage entire files, individual hunks, or specific lines
 - **Commits** — Create commits with message templates, spell check, and GPG signing
 - **Amend Commits** — Modify the last commit with or without message changes
-
-### Best-in-Class Diff Visualization
-- **Unified & Split Views** — Toggle between single-column and side-by-side diffs
-- **Syntax Highlighting** — Language-aware highlighting for 200+ languages
-- **Word-Level Highlighting** — Smart tokenization shows exactly what changed
-- **Image Diffing** — Visual comparison for PNG, JPG, and other image formats
-- **Virtualized Rendering** — Smooth performance even with 5000+ line diffs
 
 ### Branch Management
 - **Visual Branch Graph** — See your commit history as an interactive graph
@@ -60,20 +63,12 @@ brew install --cask gitflow-gui
 - **Branch Review** — Identify stale branches, view merge status
 - **Branch Archiving** — Archive branches you want to keep but hide
 
-### Service Integrations
-- **GitHub** — OAuth authentication, clone repos, manage pull requests
-- **GitLab** — Token authentication, merge request management
-- **Bitbucket** — App password authentication, pull request support
-- **Azure DevOps** — PAT authentication, repository browsing
-- **Gitea** — Self-hosted Git server integration
-- **Beanstalk** — Full Beanstalk service support
-
-### Pull Request Management
-- View and create pull requests from all connected services
-- PR diff viewer with full syntax highlighting
-- Add comments, approve, request changes
-- Merge or close PRs directly from the app
-- Drag-and-drop branch to create PR
+### GitHub Integration
+- **OAuth Authentication** — Secure login with GitHub OAuth
+- **Repository Browsing** — Browse and clone your repositories
+- **Pull Requests** — Create, review, and merge pull requests
+- **Code Reviews** — Add comments, approve, or request changes
+- **Full Workflow** — Complete GitHub workflow without leaving the app
 
 ### Advanced Features
 - **Interactive Rebase** — Visual editor to reorder, squash, fixup, drop commits
