@@ -1,22 +1,38 @@
 #!/bin/bash
 #
 # GitFlow Installer Script
-# Downloads and installs GitFlow, removing macOS quarantine to avoid security warnings.
+# Downloads and installs the latest GitFlow release, removing macOS quarantine to avoid security warnings.
 #
 
 set -e
 
 APP_NAME="GitFlow"
-VERSION="1.0.7"
-DMG_URL="https://github.com/Nicolas-Arsenault/GitFlow/releases/download/v${VERSION}/GitFlow-${VERSION}.dmg"
-DMG_FILE="/tmp/GitFlow-${VERSION}.dmg"
+REPO="Nicolas-Arsenault/GitFlow"
 MOUNT_POINT="/Volumes/GitFlow"
 INSTALL_PATH="/Applications"
 
 echo "╔════════════════════════════════════════╗"
-echo "║       GitFlow Installer v${VERSION}    ║"
+echo "║         GitFlow Installer              ║"
 echo "╚════════════════════════════════════════╝"
 echo ""
+
+# Fetch latest release version from GitHub API
+echo "→ Checking for latest version..."
+LATEST_RELEASE=$(curl -s "https://api.github.com/repos/${REPO}/releases/latest")
+VERSION=$(echo "$LATEST_RELEASE" | grep '"tag_name":' | sed -E 's/.*"tag_name": *"v?([^"]+)".*/\1/')
+
+if [[ -z "$VERSION" ]]; then
+    echo "Error: Could not determine latest version."
+    echo "Please check your internet connection or visit:"
+    echo "  https://github.com/${REPO}/releases"
+    exit 1
+fi
+
+echo "→ Latest version: v${VERSION}"
+echo ""
+
+DMG_URL="https://github.com/${REPO}/releases/download/v${VERSION}/GitFlow-${VERSION}.dmg"
+DMG_FILE="/tmp/GitFlow-${VERSION}.dmg"
 
 # Check if running on macOS
 if [[ "$(uname)" != "Darwin" ]]; then
