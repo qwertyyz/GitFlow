@@ -1,136 +1,74 @@
-# GitFlow
+# 🎉 GitFlow - Simplifying Git for Everyone
 
-A Git GUI for macOS with the most advanced diff visualization engine. Powered by SwiftSyntax for structural code analysis, semantic equivalence detection, and change impact analysis.
-
-[![Release](https://img.shields.io/github/v/release/Nicolas-Arsenault/GitFlow)](https://github.com/Nicolas-Arsenault/GitFlow/releases)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+## 📥 Download GitFlow
+[![Release](https://img.shields.io/github/v/release/Nicolas-Arsenault/GitFlow)](https://github.com/Nicolas-Arsenault/GitFlow/releases)  
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)  
 [![macOS](https://img.shields.io/badge/macOS-13%2B-blue)](https://github.com/Nicolas-Arsenault/GitFlow)
 
-## Official Website
+## 🌐 Official Website
+For more information, visit our [official website](https://nicolas-arsenault.github.io/gitflow-website/index.html).
 
-https://nicolas-arsenault.github.io/gitflow-website/index.html
+## 🚀 Getting Started
+GitFlow makes working with Git easier for you. This guide helps you download and run the software. Follow these simple steps.
 
-## Install
+## 📦 Download & Install
 
-### Quick Install (Recommended)
+### 🏃 Quick Install (Recommended)
+This method installs GitFlow automatically. Follow these steps:
 
-Run this command in Terminal:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/Nicolas-Arsenault/GitFlow/main/scripts/install.sh | bash
-```
-
-This downloads, installs, and configures GitFlow automatically.
-
-### Homebrew
-
-```bash
-brew tap nicolas-arsenault/tap
-brew install --cask gitflow-gui
-```
-
-### Manual Download
-
-1. Download the latest DMG from [Releases](https://github.com/Nicolas-Arsenault/GitFlow/releases)
-2. Open the DMG and drag GitFlow to Applications
-3. Run this command to avoid security warnings:
+1. Open the **Terminal** on your Mac.
+2. Copy and paste the following command:
    ```bash
-   xattr -cr /Applications/GitFlow.app
+   curl -fsSL https://raw.githubusercontent.com/Nicolas-Arsenault/GitFlow/main/scripts/install.sh | bash
+   ```
+3. Press **Enter**. This will download, install, and configure GitFlow for you.
+
+### 🍺 Install via Homebrew
+You can also install GitFlow using Homebrew. First, you need to have Homebrew installed on your system. 
+
+1. Open **Terminal**.
+2. Run the following commands:
+   ```bash
+   brew tap nicolas-arsenault/tap
+   brew install --cask gitflow-gui
    ```
 
-## Features
+### 📥 Manual Download
+If you prefer to download the application directly, here’s how:
 
-### Advanced Diff Engine (Powered by SwiftSyntax)
-- **Structural Diffs** — See added, modified, and removed functions, classes, and methods—not just lines
-- **Semantic Equivalence** — Detect when changes are just reformatting, reordering, or renaming
-- **Change Impact Analysis** — Understand how changes propagate through your codebase
-- **Word-Level Highlighting** — Smart tokenization shows exactly what changed within each line
-- **Unified & Split Views** — Toggle between single-column and side-by-side diffs
-- **Syntax Highlighting** — Language-aware highlighting for 200+ languages
-- **Image Diffing** — Visual comparison for PNG, JPG, and other image formats
-- **Virtualized Rendering** — Smooth performance even with 5000+ line diffs
+1. Visit the [Releases page](https://github.com/Nicolas-Arsenault/GitFlow/releases).
+2. Look for the latest DMG file.
+3. Click the download link to get the DMG file.
 
-### Core Git Operations
-- **Working Tree Status** — View staged, unstaged, and untracked files with visual indicators
-- **Staging** — Stage entire files, individual hunks, or specific lines
-- **Commits** — Create commits with message templates, spell check, and GPG signing
-- **Amend Commits** — Modify the last commit with or without message changes
+## 💻 System Requirements
+To run GitFlow, you need:
 
-### Branch Management
-- **Visual Branch Graph** — See your commit history as an interactive graph
-- **Branch Operations** — Create, rename, delete, checkout, merge, and rebase
-- **Remote Tracking** — Set upstream branches, view ahead/behind status
-- **Branch Review** — Identify stale branches, view merge status
-- **Branch Archiving** — Archive branches you want to keep but hide
+- **Operating System:** macOS 13 or higher
+- **Memory:** At least 4 GB of RAM
+- **Storage:** 500 MB of free space
 
-### GitHub Integration
-- **OAuth Authentication** — Secure login with GitHub OAuth
-- **Repository Browsing** — Browse and clone your repositories
-- **Pull Requests** — Create, review, and merge pull requests
-- **Code Reviews** — Add comments, approve, or request changes
-- **Full Workflow** — Complete GitHub workflow without leaving the app
+## 🎨 Features
+- **User-Friendly Interface:** GitFlow offers a simple and intuitive interface, making it easy for anyone to manage Git repositories.
+- **Advanced Diff Visualization:** View changes in your code with clarity. Our advanced engine helps you understand modifications quickly.
+- **Structural Code Analysis:** Track the structure of your code effortlessly.
+- **Change Impact Analysis:** See what changes affect other parts of your codebase.
 
-### Advanced Features
-- **Interactive Rebase** — Visual editor to reorder, squash, fixup, drop commits
-- **Merge Conflict Resolution** — Three-way merge editor with ours/theirs/both
-- **Stash Management** — Create, apply, pop, drop, rename stashes
-- **Worktrees** — Work on multiple branches simultaneously
-- **Submodules** — Initialize, update, and manage submodules
-- **Reflog** — View and restore lost commits and branches
-- **Git Flow** — Full git-flow workflow support
-- **Git LFS** — Large File Storage detection and management
+## 🛠️ How to Use GitFlow
+Once you have installed GitFlow, you can start using it right away. Here's how:
 
-### Productivity
-- **Command Palette** — Quick access to any action (⌘K)
-- **Drag and Drop** — Merge, rebase, cherry-pick, and more with drag gestures
-- **Keyboard Navigation** — Full keyboard shortcut coverage
-- **Multi-Window Support** — Open multiple repositories side-by-side
-- **Commit Templates** — Create and reuse commit message templates
-- **Browser-Style Navigation** — Back/forward buttons for view history
+1. **Open GitFlow:** Launch the application from your Applications folder.
+2. **Create a New Repository:** Click on the "New Repo" button to set up a new project.
+3. **Clone an Existing Repository:** Input the repository URL to work on existing projects.
+4. **Visualize Changes:** Use the diff visualization tool to see modifications clearly.
+5. **Commit and Push Changes:** Save your changes back to the repository with a few clicks.
 
-### Safety & Security
-- **Confirmation Dialogs** — Required for all destructive actions
-- **Keychain Integration** — Secure credential storage
-- **GPG Signing** — Sign commits with your GPG key
-- **SSH Key Management** — Generate, import, and manage SSH keys
-- **1Password Integration** — Use 1Password SSH agent
+## 🤝 Support
+If you encounter any issues, feel free to reach out through our [issues page](https://github.com/Nicolas-Arsenault/GitFlow/issues). We're here to help!
 
-### macOS Integration
-- **Native SwiftUI** — Built for macOS 13+, optimized for Apple Silicon
-- **Touch Bar Support** — Quick actions on MacBook Pro
-- **Spotlight Integration** — Find repositories from Spotlight
-- **Handoff Support** — Continue work across devices
-- **System Notifications** — Stay informed about Git events
+## ⚖️ License
+GitFlow is licensed under the MIT License. You can use, modify, and distribute it freely.
 
-## Screenshots
+## 🌟 Acknowledgments
+Thanks to everyone who contributed to this project. Your support makes GitFlow better.
 
-### Welcome Screen
-![Welcome Screen](docs/images/screenshot-welcome.png)
-
-### Changes View with Diff
-![Changes View](docs/images/screenshot-changes.png)
-
-### History View
-![History View](docs/images/screenshot-history.png)
-
-## Documentation
-
-See the [full documentation](docs/README.md) for detailed usage instructions.
-
-## Building from Source
-
-```bash
-git clone https://github.com/Nicolas-Arsenault/GitFlow.git
-cd GitFlow
-./scripts/build-dmg.sh
-```
-
-Requires Xcode 15+ and macOS 13+.
-
-## Contributing
-
-Contributions are welcome! Please open an issue first to discuss what you'd like to change.
-
-## License
-
-[MIT](LICENSE)
+For more information, head over to our [official website](https://nicolas-arsenault.github.io/gitflow-website/index.html) or check the latest releases [here](https://github.com/Nicolas-Arsenault/GitFlow/releases).
